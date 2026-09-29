@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BookMatch — Discover New Books</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+    <header class="site-header">
+
+        <div class="search-shell">
+
+            <span class="search-icon">⌕</span>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search for books, authors, genres"
+>
+
+            <button id="clearSearch"type="button">×</button>
+
+            <div id="searchDropdown" class="search-dropdown hidden">
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <!-- HOME PAGE -->
+
+        <section id="homeView" class="view">
+
+            <div class="hero">
+
+                <div>
+
+                    <h1>
+                        Discover New Books
+                    </h1>
+
+                    <p class="hero-subtitle">
+                        Find your next read from books you already love.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- CATEGORY BUTTONS -->
+
+            <nav id="categoryFilters" class="category-filters">
+
+                <button
+                    class="category active"
+                    data-category="All">
+                    All
+                </button>
+
+                <button
+                    class="category"
+                    data-category="Fiction">
+                    Fiction
+                </button>
+
+                <button
+                    class="category"
+                    data-category="Drama">
+                    Drama
+                </button>
+
+                <button
+                    class="category"
+                    data-category="Fantasy">
+                    Fantasy
+                </button>
+
+            </nav>
+
+
+            <!-- BOOKS -->
+
+            <section>
+
+                <div
+                    id="homeGrid"
+                    class="book-grid">
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- SEARCH RESULTS -->
+
+        <section
+            id="searchView"
+            class="view hidden">
+
+            <button
+                id="backHomeFromSearch"
+                class="back-link">
+                ← All Books
+            </button>
+
+            <div class="section-heading">
+
+                <h2>
+                    Search results
+                </h2>
+
+                <p id="searchSummary"></p>
+
+            </div>
+
+            <div
+                id="searchResults"
+                class="search-results">
+            </div>
+
+        </section>
+
+
+        <!-- BOOK DETAILS -->
+
+        <section
+            id="detailView"
+            class="view hidden">
+
+            <button
+                id="backHome"
+                class="back-link">
+                ← All Books
+            </button>
+
+
+            <!-- SELECTED BOOK -->
+
+            <article
+                id="selectedBook"
+                class="selected-book">
+            </article>
+
+
+            <!-- RECOMMENDATIONS -->
+
+            <section class="recommendation-section">
+
+                <div class="section-heading">
+
+                    <h2>
+                        You Might Also Like
+                    </h2>
+
+                    <p>
+                        Recommendations based on title,
+                        category, description, and author similarity.
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="recommendationGrid"
+                    class="book-grid recommendation-grid">
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+
+    <!-- NOTIFICATION -->
+
+    <div
+        id="toast"
+        class="toast">
+    </div>
+
+
+        <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>
