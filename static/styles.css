@@ -24,7 +24,7 @@ body {
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
-  background-color: #F8F4EC;
+  background-color: #fff9f5;
   font-family: "DM Sans", Arial, sans-serif;
 }
 
@@ -40,8 +40,9 @@ button {
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 50;
-  background: #F7F4EE;
+  z-index: 40;
+  background: #fff9f5;
+  border-bottom: 1px solid #cacaca;
   backdrop-filter: blur(10px);
   padding: 18px 24px 8px;
 }
@@ -57,9 +58,9 @@ button {
   box-sizing: border-box;
   height: 52px;
   padding: 0 52px 0 50px;
-  border: 2px solid #b8b8b8;
+  border: 1px solid #cacaca;
   border-radius: 28px;
-  background: #F7F4EE;;
+  background: #ffffff;
   font-size: 1rem;
   color: #222;
   outline: none;
@@ -126,13 +127,45 @@ button {
   background: #eaeaea;
 }
 
-.result-cover {
-  width: 26px;
-  height: 34px;
-  border-radius: 2px;
-  background: #a58a65;
-  object-fit: cover;
+.search-award-label {
+  display: inline-block;
+  margin-top: 4px;
+  color: #855c65;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
 }
+
+
+
+.bestseller-badge {
+    position:absolute;
+    background: #f8e7df;
+    color: #d85842;
+    border: 1px solid #e4c8bb;
+    border-radius: 20px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Keep search thumbnails compact */
+.result-cover {
+  position: relative;
+  width: 40px;
+  min-width: 40px;
+  height: 56px;
+  aspect-ratio: auto;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+/* Don't display a large seal on tiny search thumbnails */
+.result-cover .award-stamp {
+  display: none;
+}
+
 
 .result-title {
   font-size: 14px;
@@ -151,7 +184,7 @@ button {
 }
 
 main {
-  width: min(1120px, calc(100% - 42px));
+  width: min(1250px, calc(100% - 42px));
   margin: 0 auto;
 }
 
@@ -163,24 +196,26 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 190px;
-  padding: 40px 12px 16px;
+  min-height: 170px;
+  padding: 20px 12px 16px;
 }
 
 .hero h1 {
-  margin: 0;
+  margin-top: 30px;
+  margin-left:0px;
   font-family: "Playfair Display", Georgia, serif;
   font-style: italic;
-  font-size: clamp(36px, 5.5vw, 64px);
+  margin-bottom: 1px;
+  font-size: clamp(32px, 5.2vw, 55px);
   line-height: .95;
   letter-spacing: -3px;
 }
 
 .hero-subtitle {
-  margin: 18px 0 0 7px;
   color: #777;
-  font-family: "Poppins", sans-serif;
-  font-size: 18px;
+  font-family: "Times new roman", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(20px, 4vw, 22px);
 }
 
 .hero-doodle {
@@ -194,8 +229,6 @@ main {
   position: absolute;
   left: 20px;
   top: 10px;
-  width: 72px;
-  height: 88px;
   border: 2px solid #999;
   border-top: 0;
   border-radius: 45% 45% 40% 45%;
@@ -218,33 +251,101 @@ main {
 .doodle-book-2 { bottom: 25px; transform: rotate(-3deg); }
 .doodle-book-3 { bottom: 40px; transform: rotate(5deg); }
 
+
+
+/* Other Books heading */
+.other-books-heading h2 {
+  margin: 15px 25px 0px;
+  font-size: clamp(10px, 3.2vw, 28px);
+
+}
+
+/* Personalized recommendations section */
+.personalized-section {
+    margin-bottom: 0;
+    padding: 0 12px 16px;
+}
+
+/* Heading spacing */
+#personalizedHeading h2 {
+  margin: 20px 15px 6px;
+  font-size: clamp(10px, 3.2vw, 28px);
+}
+
+#personalizedHeading p {
+    margin-top: 6px;
+    margin-left: 10px;
+    color: #777;
+    font-style: italic;
+}
+
+/* Empty message spacing */
+#personalizedEmptyMessage {
+  font-style:italic;
+    margin-left: 26px;
+    color: #777;
+}
+
+
+/* Divider spacing */
+.section-divider {
+    margin:0px;
+}
+
+
+/* Keep spacing consistent around recommendations */
+.recommendation-section {
+  margin-bottom: 32px;
+}
+
+
+
 .category-filters {
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 0 0 15px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 20px;
+  padding: 0 4px 15px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.category-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .category {
+  flex: 0 0 auto;
   min-width: 100px;
-  padding: 8px 20px;
-  border: 1.5px solid #cacaca;
-  border-radius: 20px;
-  background: #F7F4EE;
-  color: #222;
+  margin: 0;
+  padding: 8px 18px;
+  border: 1.8px solid #959595;
+  border-radius: 25px;
+  background: #fff9f5;
+  color: #757575;
   font-family: "Playfair Display", Georgia, serif;
   font-style: italic;
+  text-align: center;
+}
+
+.category:hover {
+  border-color: #2C2C2C;
+  color: #2C2C2C;
 }
 
 .category.active {
   color: #F7F4EE;
   background: #2C2C2C;
+  border: 1.8px solid #2C2C2C;
 }
 
 .book-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 28px 20px;
+  gap: 12px 10px;
   width: 100%;
 
   @media (max-width: 1000px) {
@@ -272,9 +373,9 @@ main {
 
 .book-card {
   min-width: 0;
-  padding: 8px;
-  background: #F7F4EE;
-  border: 1px solid #eeeeee;
+  padding: 10px;
+  background:#fff9f5;
+  border: 1px solid #eeeeee00;
   transition: transform .2s, box-shadow .2s;
 }
 
@@ -292,32 +393,368 @@ main {
   color: inherit;
 }
 
-.book-cover,
-.cover-fallback {
+
+
+
+.like-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+
   display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: none;
+  color: #777;
+  font-size: 35px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.like-button.is-liked {
+  /* Keep liked hearts visible in every book section */
+
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  color: #e34f4f !important;
+  background: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.like-button:hover {
+  color: #e34f4f;
+  transform: scale(1.08);
+}
+
+.selected-title-row .like-button {
+  position: static;
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .selected-book-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Liked Books button */
+.nav-liked-button {
+    position: absolute;
+    top: 24px;
+    right: 5%;
+    z-index: 10;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 10px 16px;
+    border: 1px solid var(--border-color, #e4d8d0);
+    border-radius: 24px;
+
+    background: var(--card-background, #fffaf6);
+    color: var(--text-color, #292321);
+
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.nav-liked-button:hover {
+    background: var(--hover-background, #f3e8e0);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.nav-liked-button:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+.nav-liked-button .liked-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 12px;
+    background: #f1e3dc;
+    font-size: 12px;
+}
+
+/* Phone layout: show only the heart */
+@media (max-width: 600px) {
+    .nav-liked-button {
+        top: 18px;
+        right: 16px;
+
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        gap: 0;
+
+        border-radius: 50%;
+        font-size: 0;
+    }
+
+    .nav-liked-button > span:first-child {
+        font-size: 21px;
+        line-height: 1;
+    }
+
+    .nav-liked-button .liked-count {
+        display: none;
+    }
+}
+
+
+
+/* Horizontal personalized recommendations */
+
+
+/* Keep the recommendations section stable */
+#personalizedGrid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch;
+  gap: 10px;
   width: 100%;
-  aspect-ratio: 2 / 3;
-  height: auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 
-  overflow: hidden;
-  border-radius: 4px;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0px;
+}
 
+
+/* Keep the category controls from shifting */
+#categoryFilters {
+  min-height: 44px;
+}
+
+/* Every recommendation has a consistent width */
+#personalizedGrid > .book-card {
+  flex: 0 0 190px !important;
+  width: 200px !important;
+  min-width: 200px;
+  max-width: 200px;
+  position: relative;
+  scroll-snap-align: start;
   box-sizing: border-box;
 }
 
+#personalizedGrid .personalized-book-button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Consistent cover size */
+#personalizedGrid .book-cover {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 2.1 / 3;
+  height: auto;
+  overflow: hidden;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Keep book text readable */
+#personalizedGrid .book-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 2px;
+}
+
+#personalizedGrid .book-title {
+  overflow-wrap: anywhere;
+}
+
+#personalizedGrid .like-button {
+  z-index: 5;
+}
+
+
+#personalizedGrid::-webkit-scrollbar {
+  height: 8px;
+}
+
+#personalizedGrid::-webkit-scrollbar-thumb {
+  background: #c75c38;
+  border-radius: 8px;
+}
+
+@media (max-width: 760px) {
+  #personalizedGrid > .book-card {
+    flex-basis: 220px !important;
+    width: 220px !important;
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  #homeGrid > .book-card,
+  #recommendationGrid > .book-card {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  #personalizedGrid > .book-card {
+    flex-basis: 190px !important;
+    width: 190px !important;
+    min-width: 190px;
+    max-width: 190px;
+  }
+}
+
+
+
+/* Book cover container */
+
+.book-cover,
+.result-cover,
 .cover-fallback {
   position: relative;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 14px;
-
-  color: #f8f3e7;
-  text-decoration: none;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  isolation: isolate;
+  display: flex;
+  width: 100%;
+  aspect-ratio: 2.1 / 3;
+  height: auto;
+  overflow: hidden;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
+
+
+
+/* Actual cover image */
+.book-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.award-stamp {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+
+  /* Fixed circular badge */
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  border-radius: 50%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0px;
+  padding: 7px 7px 7px;
+
+  background: #e5bdc9;
+  color: #855c65;
+  border: 1px solid #b78391;
+
+  text-align: center;
+  font-family: Georgia, serif;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow: hidden;
+}
+
+/* Decorative inner circle */
+.award-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(133, 92, 101, 0.65);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Star */
+.award-icon {
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Short decorative line */
+.award-divider {
+  display: block;
+  width: 22px;
+  height: 1px;
+  margin: 0;
+  flex-shrink: 0;
+  background: #a47782;
+  margin: 0.5px 0;
+}
+
+/* Award name */
+.award-name {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  flex-shrink: 1;
+
+  margin-top: 4px;
+  text-align: center;
+  font-size: 7.2px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
+}
+
 
 .cover-title {
   display: -webkit-box;
@@ -353,6 +790,9 @@ main {
 
   opacity: 0.75;
 }
+
+
+
 .book-info {
   display: flex;
   flex-direction: column;
@@ -364,10 +804,11 @@ main {
 
 .book-title {
   display: block;
-  margin-bottom: 6px;
+  margin: 5px 0 0;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 14px;
-  font-style: italic;
+  font-style:italic;
+  font-size: 14.2px;
+  font-weight: 800;
   line-height: 1.15;
   display: -webkit-box !important;
   overflow: hidden !important;
@@ -385,21 +826,16 @@ main {
   display: block;
   margin: 3px 0 0;
   color: #757171;
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.2;
 }
 
 .book-category {
+  display: block;  
   margin: 3px 0 0;
   color: #757171;
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.2;
-}
-
-.book-category {
-  color: #aaa;
 }
 
 .section-heading {
@@ -407,17 +843,20 @@ main {
 }
 
 .section-heading h2 {
-  margin: 0;
+  margin: 10px;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 34px;
+  font-size: 30px;
   font-style: italic;
 }
 
 .section-heading p {
-  margin: 5px 0 0;
-  color: #888;
-  font-size: 13px;
+  margin: 10px;
+  color: #777;
+  font-family: "Times new roman", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(18px, 3vw, 20px);
 }
+
 
 .back-link {
   margin: 16px 0 10px;
@@ -479,8 +918,10 @@ main {
 
 .selected-cover {
   width: 100%;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 2 / 3.05;
   object-fit: cover;
+  min-width: 230px;
+
 }
 
 .selected-content {
@@ -491,9 +932,13 @@ main {
   margin: 0 0 8px;
   font-family: "Playfair Display", Georgia, serif;
   font-style: italic;
-  font-size: clamp(30px, 4vw, 50px);
+  font-size: clamp(28px, 3.5vw, 45px);
   line-height: 1;
-  text-align: justify;
+  display: -webkit-box !important;
+  overflow: hidden !important;
+
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
 }
 
 .selected-author {
@@ -503,8 +948,29 @@ main {
   padding-bottom: 18px;
 }
 
+
+
+.google-books-link {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 16px;
+    border: 1px solid #6b5b95;
+    border-radius: 20px;
+    color: #6b5b95;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.google-books-link:hover {
+    background-color: #6b5b95;
+    color: white;
+}
+
+
+
 .selected-description {
-  max-height: 150px;
+  max-height: 140px;
   overflow-y: auto;
   padding-right: 16px;
   margin: 24px 0;
@@ -541,7 +1007,7 @@ main {
 }
 
 .recommendation-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .match-badge {
@@ -658,6 +1124,7 @@ main {
   }
 }
 
+
 /* =========================
    COLORFUL BOOK COVERS
    ========================= */
@@ -665,7 +1132,7 @@ main {
 .cover-fallback {
   position: relative;
   box-sizing: border-box;
-
+  box-shadow: 0 4px 12px rgba(0,0,0,.04);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -686,40 +1153,53 @@ main {
 /* Cover colors */
 
 .cover-blue {
+  background: #749fca;
+}
+
+.cover-dark-blue{
+  background: #6178b3;
+}
+
+.cover-muted-blue{
   background: #3A4A5C;
 }
 
-.cover-green {
+.cover-leaf-green {
   background: #1A2C1A;
 }
 
-.cover-purple {
-  background: #3D1A4A;
+.cover-green-light {
+  background: #3D5A47;
+}
+
+.cover-purple-light {
+  background: #5f3e83;
+}
+
+.cover-lilac {
+  background: #805f92;
+}
+
+.cover-salmon{
+  background: #e7a8a2;
+}
+
+.cover-pink{
+  background: #D99482;
+}
+
+.cover-peach{
+  background: #e88686;
 }
 
 .cover-teal {
   background: #1A5F6B;
 }
 
-.cover-orange {
-  background: #C4603A;
-}
-
-.cover-mustard {
-  background: #7A6C20;
-}
-
-.cover-terracotta {
-  background: #7A3520;
-}
-
-.cover-black {
-  background: #2C2C2C;
-}
-
 .cover-indigo {
   background: #1A1A2E;
 }
+
 
 
 /* Decorative lines */
@@ -731,7 +1211,8 @@ main {
   display: block;
 
   width: 100%;
-  height: 1px;
+  height: 1.1px;
+  opacity: 0.4;
 
   background: var(--cover-accent);
 }
@@ -749,15 +1230,20 @@ main {
   color: var(--cover-accent);
 
   font-family: Georgia, serif;
-  font-size: clamp(0.7rem, 1vw, 0.95rem);
+  font-size: clamp(0.8rem, 2vw, 1rem);
   font-weight: bold;
-  line-height: 1.2;
+  line-height: 1.4;
 
   text-align: center;
 
+  display: -webkit-box !important;
+  overflow: hidden !important;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+
+  display: -webkit-box !important;
+  overflow: hidden !important;
 }
 
 
@@ -771,10 +1257,245 @@ main {
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  line-height: 1.3;
+  line-height: 1.4;
+  opacity: 0.7;
 
   text-align: center;
   text-transform: uppercase;
+}
 
-  opacity: 0.7;
+
+/* ==========================================
+   PHONE BOOK DETAILS
+   ========================================== */
+@media (max-width: 760px) {
+    #selectedBook {
+        display: block;
+        width: 100%;
+        padding: 14px 12px 28px;
+        border-bottom: 1px solid #dedede;
+        max-width: 100%;
+        min-width: 0;
+        margin: 0 auto 16px;
+        align-self: center;
+    }
+
+
+    #selectedBook .selected-book-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #selectedBook .selected-content {
+        display: contents;
+    }
+
+    #selectedBook .selected-title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        grid-row: 1;
+        min-width: 0;
+        margin: 0;
+    }
+
+    #selectedBook .selected-title-row h1 {
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 0;
+        margin: 0 0 8px;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(32px, 7vw, 45px);
+        font-style: italic;
+        line-height: 1.15;
+        letter-spacing: normal;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    #selectedBook .selected-title-row > .like-button {
+        position: static;
+        display: flex;
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        margin: 0 0 4px;
+        padding: 0;
+        font-size: 22px;
+    }
+
+    #selectedBook .selected-author {
+        grid-row: 2;
+        margin: 0;
+        border-bottom: 1px solid #dedede;
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    #selectedBook .selected-cover-wrap {
+        grid-row: 3;
+        width: min(100%, 220px);
+        max-width: 220px;
+        min-width: 0;
+        aspect-ratio: 2.1 / 3;
+        justify-self: center;
+        margin: 8px auto 16px;
+    }
+
+    #selectedBook .selected-cover {
+        display: flex;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        height: 100%;
+        aspect-ratio: 2.1 / 3;
+    }
+
+    #selectedBook .selected-book-badges {
+        grid-row: 4;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 12px;
+    }
+
+    #selectedBook .google-books-link {
+        grid-row: 5;
+        display: inline-block;
+        width: auto;
+        max-width: 100%;
+        margin: 0 0 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        writing-mode: horizontal-tb;
+    }
+
+    #selectedBook .selected-description {
+        grid-row: 6;
+        width: 100%;
+        max-width: 100%;
+        max-height: 180px;
+        margin: 10px 0 14px;
+        padding-right: 5px;
+        font-size: 15px;
+        line-height: 1.5;
+        text-align: justify;
+        overflow-y: auto;
+        overflow-wrap: break-word;
+    }
+
+    #selectedBook .selected-category {
+        grid-row: 7;
+        margin: 0;
+        padding-bottom: 10px;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+    }
+
+    /* Recommendations remain below the details */
+    #detailView .recommendation-section {
+        margin-top: 18px;
+        padding-top: 10px;
+    }
+
+    #detailView .recommendation-heading h2,
+    #detailView .section-heading h2 {
+        font-size: 24px;
+    }
+
+    #detailView .section-heading p {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+}
+
+@media (min-width: 761px) {
+    #selectedBook {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    #selectedBook .selected-title {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    #homeGrid,
+    #recommendationGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ==========================================
+   BOOK DETAILS — RESPONSIVE LAYOUT
+   Desktop: cover on left, details on right
+   Phone: details stacked vertically
+   ========================================== */
+
+/* WIDER SCREENS: restore side-by-side layout */
+@media (min-width: 761px) {
+    #selectedBook {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        margin: 0 auto;
+    }
+
+    #selectedBook .selected-book-layout {
+        display: grid;
+        grid-template-columns: 190px minmax(0, 1fr);
+        column-gap: 16px;
+        align-items: start;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #selectedBook .selected-cover-wrap {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        width: 100%;
+        max-width: 190px;
+        min-width: 0;
+        aspect-ratio: 2.1 / 3;
+    }
+
+    #selectedBook .selected-cover-wrap .selected-cover {
+        display: flex;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        height: 100%;
+        aspect-ratio: 2.1 / 3;
+    }
+
+    #selectedBook .selected-heading,
+    #selectedBook .selected-content {
+        grid-column: 2;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    #selectedBook .selected-title {
+        width: 100%;
+        min-width: 0;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+
+    #selectedBook .google-books-link {
+        writing-mode: horizontal-tb;
+        max-width: 100%;
+    }
 }

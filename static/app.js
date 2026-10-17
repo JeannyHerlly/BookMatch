@@ -1,151 +1,8 @@
-/*
-  BookMatch frontend
-
-  API contract expected by this file:
-
-  GET /api/search?q=kokoro
-    -> [
-      {
-        id: 4786,
-        title: "Kokoro",
-        authors: "Natsume Sôseki",
-        categories: "Fiction",
-        published_date: "1996-07-01",
-        thumbnail: "https://..."
-      }
-    ]
-
-  POST /api/recommend
-    body:
-    {
-      "title": "Kokoro",
-      "author": "Natsume Sôseki",
-      "n": 10
-    }
-
-    -> {
-      "book": { ... },
-      "recommendations": [
-        {
-          "id": 123,
-          "title": "...",
-          "authors": "...",
-          "categories": "...",
-          "thumbnail": "...",
-          "similarity": 0.72,
-          "author_bonus": 0.15,
-          "final_score": 0.87
-        }
-      ]
-    }
-
-  If your Flask/FastAPI routes use different names, only change API_CONFIG.
-*/
-
-const API_CONFIG = {
-  search: "/api/search",
-  recommend: "/api/recommend",
-  discover: "/api/discover",
-  useDemoData: false
-};
-
-/* Demo data lets you build/test the UI before connecting Python. */
-const demoBooks = [
-  {
-    id: 1,
-    title: "Flashlight",
-    authors: "Susan Choi",
-    categories: "Fiction",
-    published_date: "2007",
-    description: "A literary novel about family, mystery, memory, and a life changed by a strange nighttime event.",
-    thumbnail: ""
-  },
-  {
-    id: 2,
-    title: "The Night Ocean",
-    authors: "Paul La Farge",
-    categories: "Fiction",
-    published_date: "2010",
-    description: "A literary mystery blending strange discoveries, writers, secrets, and speculative ideas.",
-    thumbnail: ""
-  },
-  {
-    id: 3,
-    title: "PARADOX",
-    authors: "Margarita Perez",
-    categories: "Sci-fi",
-    published_date: "2016",
-    description: "A speculative story exploring identity, uncertainty, and the boundaries between realities.",
-    thumbnail: ""
-  },
-  {
-    id: 4,
-    title: "Educated",
-    authors: "Tara Westover",
-    categories: "Autobiography",
-    published_date: "2022",
-    description: "A memoir about education, family, identity, and discovering a different way of understanding the world.",
-    thumbnail: ""
-  },
-  {
-    id: 5,
-    title: "Wicked",
-    authors: "Gregory Maguire",
-    categories: "Fantasy",
-    published_date: "1995",
-    description: "A reimagining of Oz that explores friendship, politics, identity, and the stories behind familiar characters.",
-    thumbnail: ""
-  },
-  {
-    id: 6,
-    title: "Sleeping Murder",
-    authors: "Agatha Christie",
-    categories: "Mystery",
-    published_date: "1989",
-    description: "A mystery involving an old house, buried memories, and a long-hidden secret.",
-    thumbnail: ""
-  },
-  {
-    id: 7,
-    title: "Kokoro",
-    authors: "Natsume Sôseki",
-    categories: "Fiction",
-    published_date: "1914",
-    description: "A psychological novel exploring friendship, guilt, isolation, and the changing social world of Japan.",
-    thumbnail: ""
-  },
-  {
-    id: 8,
-    title: "Kokoro",
-    authors: "Lafcadio Hearn",
-    categories: "Literary Collections",
-    published_date: "1896",
-    description: "A collection of essays about Japanese culture, customs, beliefs, and everyday life.",
-    thumbnail: ""
-  },
-  {
-    id: 9,
-    title: "The Trial",
-    authors: "Franz Kafka",
-    categories: "Fiction",
-    published_date: "1925",
-    description: "A surreal and unsettling novel about an individual caught inside an opaque legal system.",
-    thumbnail: ""
-  },
-  {
-    id: 10,
-    title: "The Metamorphosis",
-    authors: "Franz Kafka",
-    categories: "Fiction",
-    published_date: "1915",
-    description: "A famous literary work about alienation, family relationships, identity, and transformation.",
-    thumbnail: ""
-  }
-];
-
 const state = {
   currentCategory: "All",
   currentBook: null,
+  detailHistory: [],
+  detailReturnView: null,
   searchTimer: null
 };
 
@@ -154,6 +11,12 @@ const $ = (selector) => document.querySelector(selector);
 const homeView = $("#homeView");
 const searchView = $("#searchView");
 const detailView = $("#detailView");
+const likedView = document.getElementById("likedView");
+const likedGrid = document.getElementById("likedGrid");
+const likedButton = document.getElementById("openLikedBooks");
+const openLikedBooksButton = document.getElementById("openLikedBooks");
+const backFromLikedButton = document.getElementById("backFromLiked");
+const likedCount = document.getElementById("likedCount");
 const searchInput = $("#searchInput");
 const clearSearch = $("#clearSearch");
 const searchDropdown = $("#searchDropdown");
@@ -162,6 +25,7 @@ const searchResults = $("#searchResults");
 const recommendationGrid = $("#recommendationGrid");
 const selectedBook = $("#selectedBook");
 const searchSummary = $("#searchSummary");
+const API_CONFIG = {discover: "/api/discover", search: "/api/search", recommend: "/api/recommend"};
 
 function escapeHTML(value = "") {
   return String(value)
@@ -179,6 +43,23 @@ function firstAuthor(authors = "") {
     .filter(Boolean)[0] || "Unknown author";
 }
 
+
+function updatePersonalizedSection() {
+    const heading = document.getElementById("personalizedHeading");
+    const emptyMessage = document.getElementById("personalizedEmptyMessage");
+    const grid = document.getElementById("personalizedGrid");
+
+    const hasLikedBooks = likedBookIds.size > 0;
+
+    heading.hidden = !hasLikedBooks;
+    emptyMessage.hidden = hasLikedBooks;
+
+    if (!hasLikedBooks) {
+        grid.innerHTML = "";
+    }
+}
+
+
 function firstCategory(categories = "") {
   return String(categories)
     .split(",")
@@ -186,74 +67,50 @@ function firstCategory(categories = "") {
     .filter(Boolean)[0] || "Uncategorized";
 }
 
-function coverHTML(book, className = "book-cover") {
+
+function coverHTML(book, className = "book-cover", badgeHTML = "") {
   const title = book.title || "";
+
   const colors = [
     "cover-blue",
-    "cover-green",
-    "cover-purple",
-    "cover-teal",
-    "cover-orange",
-    "cover-mustard",
-    "cover-terracotta",
-    "cover-black",
-    "cover-indigo"
+    "cover-dark-blue",
+    "cover-muted-blue",
+    "cover-leaf-green",
+    "cover-green-light",
+    "cover-purple-light",
+    "cover-lilac",
+    "cover-pink",
+    "cover-salmon",
+    "cover-peach",
+    "cover-teal"
   ];
 
   const accentColors = {
-    "cover-blue": [
-      "#F4A260"
-    ],
-
-    "cover-green": [
-      "#B87333"
-    ],
-
-    "cover-purple": [
-      "#E7D860"
-    ],
-
-    "cover-teal": [
-      "#F4A261"
-    ],
-
-    "cover-orange": [
-      "#FFF9F6"
-    ],
-
-    "cover-mustard": [
-      "#1A1A17"
-    ],
-
-    "cover-terracotta": [
-      "#F5C880"
-    ],
-
-    "cover-black": [
-      "#E63946"
-    ],
-
-    "cover-indigo": [
-      "#00E895"
-    ]
+    "cover-blue": ["#d2ebf7","#425c83","#bfe4eb"],
+    "cover-muted-blue": ["#cee4f0"],
+    "cover-dark-blue": ["#c9cde9"],
+    "cover-leaf-green": ["#a3c2ad"],
+    "cover-green-light": ["#C4DFD1","#c1e7ec"],
+    "cover-purple-light": ["#E0C3FC","#f2d8d2"],
+    "cover-pink": ["#ffefed","#493041"],
+    "cover-peach": ["#ffe4e2"],
+    "cover-teal": ["#cadcf6","#a1e5d9"],
+    "cover-lilac": ["#eecfff","#321242"],
+    "cover-salmon": ["#7c413c"],
+    "cover-indigo": ["#4FC3F7"]
   };
-
 
   let hash = 0;
 
   for (let i = 0; i < title.length; i++) {
-    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    hash = title.charCodeAt(i) + ((hash << 2) - hash);
   }
 
-  const colorIndex = Math.abs(hash) % colors.length;
-  const colorClass = colors[colorIndex];
-
+  const colorClass = colors[Math.abs(hash) % colors.length];
   const possibleAccents = accentColors[colorClass] || [];
-
-  const accent =
-    possibleAccents.length > 0
-      ? possibleAccents[Math.abs(hash >> 3) % possibleAccents.length]
-      : "";
+  const accent = possibleAccents.length
+    ? possibleAccents[Math.abs(hash >> 3) % possibleAccents.length]
+    : "";
 
   return `
     <span
@@ -265,11 +122,14 @@ function coverHTML(book, className = "book-cover") {
       </span>
 
       <span class="cover-author">
-        ${escapeHTML(firstAuthor(book.authors))}
+        ${escapeHTML(firstAuthor(book.authors) || "")}
       </span>
+
+      ${badgeHTML}
     </span>
   `;
 }
+
 
 function scoreToPercent(score) {
   if (score === undefined || score === null || Number.isNaN(Number(score))) return null;
@@ -277,42 +137,488 @@ function scoreToPercent(score) {
   return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}% match`;
 }
 
-function bookCard(book, showScore = false) {
-  const score = scoreToPercent(book.final_score ?? book.similarity);
+
+
+const likedBookIds = new Set();
+
+
+function likeButtonHTML(book) {
+  const googleId = String(book.google_id || "").trim();
+  const isLiked = likedBookIds.has(googleId);
 
   return `
-    <article class="book-card">
-      <button
-        class="book-card-button"
-        type="button"
-        data-book-id="${escapeHTML(book.google_id ?? book.id ?? "")}"
-      >
-        ${coverHTML(book)}
-
-        <span class="book-info">
-          <span class="book-title">
-            ${escapeHTML(book.title || "Untitled")}
-          </span>
-
-          <span class="book-author">
-            ${escapeHTML(firstAuthor(book.authors) || "Unknown author")}
-          </span>
-
-          <span class="book-category">
-            ${escapeHTML(firstCategory(book.categories) || "Uncategorized")}
-          </span>
-
-          ${showScore && score
-            ? `<span class="match-badge">${score}</span>`
-            : ""}
-        </span>
-      </button>
-    </article>
+    <button
+      type="button"
+      class="like-button ${isLiked ? "is-liked" : ""}"
+      data-google-id="${googleId}"
+      aria-pressed="${isLiked}"
+      aria-label="${isLiked ? "Unlike" : "Like"} this book"
+      title="${isLiked ? "Remove from liked books" : "Add to liked books"}"
+    >
+      ${isLiked ? "♥" : "♡"}
+    </button>
   `;
 }
 
+async function loadCategories() {
+    const response = await fetch("/api/categories");
+    const categories = await response.json();
+
+    const select = document.getElementById("category-filter");
+
+    categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+}
+
+async function loadLikedBooks() {
+  try {
+    const response = await fetch("/api/likes");
+    if (!response.ok) throw new Error("Could not load liked books.");
+
+    const data = await response.json();
+    const books = Array.isArray(data) ? data : (data.likes || []);
+
+    likedBookIds.clear();
+
+  books.forEach(book => {
+    if (book.google_id != null && String(book.google_id).trim()) {
+      likedBookIds.add(String(book.google_id));
+    }
+  });
+
+    updateLikedCount();
+    updatePersonalizedSection();
+
+    // Update the visible saved-books page, if present.
+    await renderLikedBooks();
+
+
+  } catch (error) {
+    console.error("Could not load saved likes:", error);
+  }
+}
+
+
+function updateVisibleLikeButtons(googleId, isLiked) {
+  document.querySelectorAll(".like-button").forEach(button => {
+    if (button.dataset.googleId !== String(googleId)) return;
+
+    button.classList.toggle("is-liked", isLiked);
+    button.setAttribute("aria-pressed", String(isLiked));
+    button.setAttribute(
+      "aria-label",
+      `${isLiked ? "Unlike" : "Like"} this book`
+    );
+  });
+}
+
+
+
+function updateLikedCount() {
+  const countElement = document.getElementById("likedCount");
+
+  if (countElement) {
+    countElement.textContent = likedBookIds.size;
+  }
+}
+
+function getBestsellerBadge(book) {
+    const value = book.is_bestseller;
+
+    const isBestseller =
+        value === true ||
+        value === 1 ||
+        ["true", "1", "yes"].includes(
+            String(value).toLowerCase()
+        );
+
+    if (!isBestseller) return "";
+
+    return `<span class="bestseller-badge">BESTSELLER</span>`;
+}
+
+
+
+function bookCard(book, showScore = false) {
+  const score = scoreToPercent(
+    book.final_score ?? book.similarity
+  );
+
+  const isAwardWinner =
+    book.is_award_winner === true ||
+    book.is_award_winner === 1 ||
+    (
+      typeof book.is_award_winner === "string" &&
+      ["true", "1"].includes(
+        book.is_award_winner.trim().toLowerCase()
+      )
+    );
+
+  const awardNames = Array.isArray(book.award_names)
+    ? book.award_names
+    : book.award_names
+      ? [book.award_names]
+      : [];
+
+  const awardLabel =
+    isAwardWinner && awardNames.length
+      ? `
+        <span class="award-name">
+          🏆 ${escapeHTML(awardNames.join(", "))}
+        </span>
+      `
+      : "";
+
+
+const cover = coverHTML(
+    book,
+    "book-cover",
+    `${getAwardBadge(book)}${getBestsellerBadge(book)}`
+);
+
+
+return `
+  <article class="book-card">
+    ${likeButtonHTML(book)}
+
+    <button
+      class="book-card-button"
+      type="button"
+      data-book-id="${escapeHTML(book.google_id ?? book.id ?? "")}"
+    >
+      ${cover}
+
+      <span class="book-info">
+        <span class="book-title">
+          ${escapeHTML(book.title || "Untitled")}
+        </span>
+
+        <span class="book-author">
+          ${escapeHTML(firstAuthor(book.authors) || "Unknown author")}
+        </span>
+
+        <span class="book-category">
+          ${escapeHTML(firstCategory(book.categories) || "Uncategorized")}
+        </span>
+
+        ${showScore && score
+          ? `<span class="match-badge">${score}</span>`
+          : ""}
+      </span>
+    </button>
+  </article>
+`;}
+
+
+
+if (likedGrid) {
+  likedGrid.addEventListener("click", (event) => {
+    // Let the heart button handle its own click.
+    if (
+      event.target.closest(".like-button") ||
+      event.target.closest(".google-books-link")
+    ) {
+      return;
+    }
+
+    const card = event.target.closest(".book-card-button");
+    if (!card) return;
+
+    const googleId = String(card.dataset.bookId || "").trim();
+
+    const book = (window.__likedBooks || []).find(
+      item => String(item.google_id || item.id || "").trim() === googleId
+    );
+
+    if (book) {
+      openBook(book);
+    } else {
+      console.warn("Liked book not found:", googleId);
+    }
+  });
+}
+
+
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest(".like-button");
+  if (!button) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const googleId = String(button.dataset.googleId || "").trim();
+  if (!googleId || button.disabled) return;
+
+  const wasLiked = likedBookIds.has(googleId);
+  button.disabled = true;
+
+  try {
+    const response = await fetch(
+      wasLiked
+        ? `/api/likes/${encodeURIComponent(googleId)}`
+        : "/api/likes",
+      {
+        method: wasLiked ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        ...(!wasLiked
+          ? { body: JSON.stringify({ google_id: googleId }) }
+          : {})
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Like request failed: ${response.status}`);
+    }
+
+    // Update the saved IDs.
+    if (wasLiked) {
+      likedBookIds.delete(googleId);
+    } else {
+      likedBookIds.add(googleId);
+    }
+
+    updateLikedCount();
+    updatePersonalizedSection();
+
+    // Update every visible copy without rebuilding the page.
+    document.querySelectorAll(".like-button").forEach((heart) => {
+      if (String(heart.dataset.googleId || "") !== googleId) return;
+
+      heart.classList.toggle("is-liked", !wasLiked);
+      heart.setAttribute("aria-pressed", String(!wasLiked));
+      heart.setAttribute(
+        "aria-label",
+        `${wasLiked ? "Like" : "Unlike"} this book`
+      );
+      heart.title = wasLiked
+        ? "Add to liked books"
+        : "Remove from liked books";
+    });
+
+    // Refresh the dedicated liked-books page only if it is visible.
+    if (!likedView.classList.contains("hidden")) {
+      await renderLikedBooks();
+    }
+
+    // Populate recommendations on the first like only if empty.
+    if (!wasLiked) {
+      await loadRecommendationsIfEmpty();
+    }
+
+  } catch (error) {
+    console.error("Could not update like:", error);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+
+
+async function renderLikedBooks() {
+  const likedGrid = document.getElementById("likedGrid");
+  if (!likedGrid) return;
+
+  try {
+    const response = await fetch("/api/likes");
+    if (!response.ok) throw new Error("Could not load liked books.");
+
+    const books = await response.json();
+    window.__likedBooks = books;
+
+    likedGrid.innerHTML = books.length
+      ? books.map(book => bookCard(book)).join("")
+      : `<p class="empty-state">You haven't liked any books yet. Click ♥ on a book to save it.</p>`;
+  } catch (error) {
+    console.error("Liked books error:", error);
+    likedGrid.innerHTML =
+      `<p class="empty-state">Could not load your liked books.</p>`;
+  }
+}
+
+
+
+let recommendationsLoading = false;
+
+async function loadRecommendationsIfEmpty() {
+  const grid = document.getElementById("personalizedGrid");
+  if (!grid || recommendationsLoading) return;
+
+  // Keep existing recommendations unchanged.
+  if (grid.querySelector(".book-card")) return;
+
+  recommendationsLoading = true;
+
+  try {
+    await renderPersonalizedRecommendations();
+  } finally {
+    recommendationsLoading = false;
+  }
+}
+
+async function initializeBookMatch() {
+  await loadLikedBooks();
+  await renderHome();
+  await renderPersonalizedRecommendations();
+}
+
+initializeBookMatch();
+
+
+async function renderPersonalizedRecommendations() {
+    const grid = document.getElementById("personalizedGrid");
+
+    if (!grid) return;
+
+    try {
+        const response = await fetch("/api/recommendations/personalized");
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const books = await response.json();
+        window.__personalizedBooks = books;
+
+        // No recommendations: keep the grid empty.
+        // The empty message is handled by the HTML.
+        if (!books.length) {
+            grid.innerHTML = "";
+            updatePersonalizedSection();
+            return;
+        }
+
+        // Render recommendation cards.
+        grid.innerHTML = books.map((book, index) => `
+            <article class="book-card">
+                ${likeButtonHTML(book)}
+
+                <button
+                    class="book-card-button personalized-book-button"
+                    type="button"
+                    data-recommendation-index="${index}"
+                >
+                    ${coverHTML(
+                  book,
+                  "book-cover",
+                  `${getAwardBadge(book)}${getBestsellerBadge(book)}`
+              )}
+
+                    <span class="book-info">
+                        <span class="book-title">
+                            ${escapeHTML(book.title || "Untitled")}
+                        </span>
+
+                        <span class="book-author">
+                            ${escapeHTML(firstAuthor(book.authors) || "Unknown author")}
+                        </span>
+
+                        <span class="book-category">
+                            ${escapeHTML(firstCategory(book.categories) || "Uncategorized")}
+                        </span>
+                    </span>
+                </button>
+            </article>
+        `).join("");
+
+        updatePersonalizedSection();
+
+    } catch (error) {
+        console.error("Personalized recommendations error:", error);
+
+        grid.innerHTML = `
+            <p class="empty-state">Could not load recommendations.</p>
+        `;
+    }
+}
+
+
+
+document.getElementById("personalizedGrid").addEventListener("click", event => {
+  // Let the existing like-button handler handle hearts.
+  if (event.target.closest(".like-button")) return;
+
+  const cardButton = event.target.closest(".book-card-button");
+  if (!cardButton) return;
+
+  const googleId = cardButton.dataset.bookId;
+
+  const book = (window.__personalizedBooks || []).find(
+    item => String(item.google_id || item.id || "") === String(googleId)
+  );
+
+  if (book) {
+    openBook(book);
+  } else {
+    console.error("Could not find the selected recommendation:", googleId);
+  }
+});
+
+
+
+function getAwardBadge(book) {
+  const isWinner =
+    book.is_award_winner === true ||
+    book.is_award_winner === 1 ||
+    (typeof book.is_award_winner === "string" &&
+      ["true", "1"].includes(
+        book.is_award_winner.trim().toLowerCase()
+      ));
+
+  if (!isWinner) return "";
+
+  let awardNames = book.award_names || "";
+
+  // Convert a string representation of a Python list into an array
+  if (typeof awardNames === "string") {
+    try {
+      awardNames = JSON.parse(
+        awardNames.replace(/'/g, '"')
+      );
+    } catch {
+      awardNames = [awardNames];
+    }
+  }
+
+  if (!Array.isArray(awardNames)) {
+    awardNames = [awardNames];
+  }
+
+  const awardName = awardNames
+    .filter(Boolean)
+    .map(name =>
+      name
+        .replace(/–winning works/gi, "")
+        .replace(/winning works/gi, "")
+        .trim()
+    )
+    .join(", ");
+
+  if (!awardName) return "";
+
+
+return `
+  <span
+    class="award-stamp"
+    title="${escapeHTML(awardName)}"
+  >
+    <span class="award-icon">★</span>
+    <span class="award-divider"></span>
+    <span class="award-name">
+      ${escapeHTML(awardName)}
+    </span>
+  </span>
+`;
+}
+
 function showView(view) {
-  [homeView, searchView, detailView].forEach(v => v.classList.add("hidden"));
+  [homeView, searchView, detailView, likedView].forEach(v => {
+    v.classList.add("hidden");
+  });
   view.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -350,18 +656,40 @@ async function searchBooks(query) {
   return response.json();
 }
 
-async function getDiscoverBooks(count = 5, category = "All") {
-  const url =
-    `${API_CONFIG.discover}?count=${count}&category=${encodeURIComponent(category)}`;
 
-  const response = await fetch(url);
 
-  if (!response.ok) {
-    throw new Error("Discover request failed.");
-  }
 
-  return response.json();
+async function getDiscoverBooks(
+    count = 20,
+    category = state.currentCategory
+) {
+    const params = new URLSearchParams({
+        count: String(count),
+        category: category || "All"
+    });
+
+    const response = await fetch(
+        `${API_CONFIG.discover}?${params.toString()}`
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to load books: HTTP ${response.status}`
+        );
+    }
+
+    const books = await response.json();
+
+    if (!Array.isArray(books)) {
+        throw new Error(
+            "Discover API did not return a list of books."
+        );
+    }
+
+    return books;
 }
+
+
 
 async function getRecommendations(book) {
   if (API_CONFIG.useDemoData) {
@@ -411,7 +739,7 @@ async function renderHome() {
 
     window.__discoverBooks = books;
 
-    const visibleBooks = books.slice(0, 5);
+    const visibleBooks = books.slice(0, 17);
 
     if (visibleBooks.length === 0) {
       homeGrid.innerHTML = `
@@ -453,7 +781,7 @@ function renderSearchDropdown(results) {
       type="button"
       data-book-id="${escapeHTML(book.google_id ?? book.id)}"
     >
-      ${coverHTML(book, "result-cover")}
+      ${coverHTML(book, "result-cover", getAwardBadge(book), getBestsellerBadge(book))}
 
       <span class="search-result-info">
         <span class="result-title">
@@ -487,9 +815,18 @@ function renderSearchPage(results, query) {
           type="button"
           data-search-index="${index}"
         >
-          ${coverHTML(book, "result-cover")}
+          ${coverHTML(book, "result-cover", getAwardBadge(book), getBestsellerBadge(book))}
 
           <span class="search-result-info">
+            ${book.is_award_winner ? `
+            <span class="search-award-label">
+              ★ ${escapeHTML(
+                String(book.award_names || "")
+                  .replace(/[\[\]'"]/g, "")
+                  .replace(/–winning works|winning works/gi, "")
+                  .trim())}
+            </span>
+          ` : ""}
             <span class="result-large-title">
               ${escapeHTML(book.title)}
             </span>
@@ -535,15 +872,41 @@ async function openBook(book) {
 
   searchDropdown.classList.add("hidden");
 
-  selectedBook.innerHTML = `
-    ${coverHTML(book, "selected-cover")}
+console.log("Selected book:", book);
+console.log("Google Books URL:", book.google_books_url);
 
-    <div class="selected-content">
-      <h1>${escapeHTML(book.title || "")}</h1>
+selectedBook.innerHTML = `
+  <div class="selected-book-layout">
+  <div class="selected-cover-wrap">
+    ${coverHTML(book, "selected-cover", getAwardBadge(book), getBestsellerBadge(book))}
+  </div>
 
-      <p class="selected-author">
+  <div class="selected-content">
+      <div class="selected-title-row">
+        <h1>${escapeHTML(book.title || "")}</h1>
+        ${likeButtonHTML(book)}
+      </div>
+
+    <p class="selected-author">
         By ${escapeHTML(firstAuthor(book.authors))}
-      </p>
+    </p>
+
+    <div class="selected-book-badges">
+    ${getAwardBadge(book)}
+    ${getBestsellerBadge(book)}
+</div>
+
+      ${book.google_books_url ? `
+    <a
+        href="${book.google_books_url}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="google-books-link"
+    >
+        <i class="fas fa-external-link-alt"></i>
+        View on Google Books
+    </a>
+` : ""}
 
       <p class="selected-description">
         ${escapeHTML(book.description || "No description available.")}
@@ -553,9 +916,11 @@ async function openBook(book) {
         ${escapeHTML(firstCategory(book.categories))}
       </p>
     </div>
-  `;
+  </div>
+`;
 
-recommendationGrid.innerHTML = recommendations.length
+
+id.innerHTML = recommendations.length
   ? recommendations.map((book, index) => `
       <article class="book-card">
         <button
@@ -563,7 +928,7 @@ recommendationGrid.innerHTML = recommendations.length
           type="button"
           data-recommendation-index="${index}"
         >
-          ${coverHTML(book)}
+          ${coverHTML(book,"book-cover", getAwardBadge(book), getBestsellerBadge(book))}
 
           <span class="book-info">
             <span class="book-title">
@@ -612,7 +977,7 @@ if (!recommendations.length) {
           type="button"
           data-recommendation-index="${index}"
         >
-          ${coverHTML(book)}
+          ${coverHTMLrecommendationGrL(book,"book-cover", getAwardBadge(book), getBestsellerBadge(book))}
 
           <span class="book-info">
             <span class="book-title">
@@ -676,21 +1041,74 @@ function findBookById(id) {
   });
 }
 
-async function openBook(book) {
+
+function googleBooksUrl(googleId) {
+    if (
+        !googleId ||
+        ["nan", "none", "null"].includes(
+            String(googleId).trim().toLowerCase()
+        )
+    ) {
+        return null;
+    }
+
+    return `https://books.google.com/books?id=${encodeURIComponent(
+        String(googleId).trim()
+    )}`;
+}
+
+
+async function openBook(book, addToHistory = true) {
   if (!book) return;
+
+  const visibleView = [homeView, searchView, likedView, detailView]
+    .find(view => !view.classList.contains("hidden"));
+
+  if (visibleView === detailView) {
+    if (
+      addToHistory &&
+      state.currentBook &&
+      String(state.currentBook.google_id ?? state.currentBook.id) !==
+        String(book.google_id ?? book.id)
+    ) {
+      state.detailHistory.push(state.currentBook);
+    }
+  } else {
+    state.detailHistory = [];
+    state.detailReturnView = visibleView || homeView;
+  }
 
   state.currentBook = book;
   searchDropdown.classList.add("hidden");
 
   selectedBook.innerHTML = `
-    ${coverHTML(book, "selected-cover")}
+    <div class="selected-book-layout">
+      <div class="selected-cover-wrap">
+        ${coverHTML(
+          book,
+          "selected-cover",
+          `${getAwardBadge(book)}${getBestsellerBadge(book)}`
+        )}
+      </div>
 
-    <div class="selected-content">
-      <h1>${escapeHTML(book.title || "")}</h1>
+      <div class="selected-content">
+    <div class="selected-title-row">
+        <h1>${escapeHTML(book.title || "")}</h1>
+        ${likeButtonHTML(book)}
+    </div>
 
-      <p class="selected-author">
+    <p class="selected-author">
         By ${escapeHTML(firstAuthor(book.authors))}
-      </p>
+    </p>
+      
+    ${googleBooksUrl(book.google_id)
+    ? `<a
+         class="google-books-link"
+         href="${googleBooksUrl(book.google_id)}"
+         target="_blank"
+         rel="noopener noreferrer"
+       >View on Google Books ↗</a>`
+    : ""}
 
       <p class="selected-description">
         ${escapeHTML(book.description || "No description available.")}
@@ -699,6 +1117,7 @@ async function openBook(book) {
       <p class="selected-category">
         ${escapeHTML(firstCategory(book.categories))}
       </p>
+      </div>
     </div>
   `;
 
@@ -723,39 +1142,42 @@ async function openBook(book) {
     }
 
     recommendationGrid.innerHTML = recommendations
-      .map((recommendedBook, index) => `
-        <article class="book-card">
-          <button
-            class="book-card-button recommendation-button"
-            type="button"
-            data-recommendation-index="${index}"
-          >
-            ${coverHTML(recommendedBook)}
+.map((recommendedBook, index) => `
+  <article class="book-card">
+    ${likeButtonHTML(recommendedBook)}
 
-            <span class="book-info">
-              <span class="book-title">
-                ${escapeHTML(recommendedBook.title || "")}
-              </span>
+    <button
+      class="book-card-button recommendation-button"
+      type="button"
+      data-recommendation-index="${index}"
+    >
+      ${coverHTML(
+    recommendedBook,
+    "book-cover",
+    `${getAwardBadge(recommendedBook)}${getBestsellerBadge(recommendedBook)}`
+)}
 
-              <span class="book-author">
-                ${escapeHTML(firstAuthor(recommendedBook.authors))}
-              </span>
+      <span class="book-info">
+        <span class="book-title">
+          ${escapeHTML(recommendedBook.title || "")}
+        </span>
 
-              <span class="book-category">
-                ${escapeHTML(firstCategory(recommendedBook.categories))}
-              </span>
-            </span>
+        <span class="book-author">
+          ${escapeHTML(firstAuthor(recommendedBook.authors))}
+        </span>
 
-            <span class="match-badge">
-              ${scoreToPercent(
-                recommendedBook.final_score ??
-                recommendedBook.similarity
-              )}
-            </span>
-          </button>
-        </article>
-      `)
-      .join("");
+        <span class="book-category">
+          ${escapeHTML(firstCategory(recommendedBook.categories))}
+        </span>
+      </span>
+
+      <span class="match-badge">
+        ${scoreToPercent(recommendedBook.final_score ?? recommendedBook.similarity)}
+      </span>
+    </button>
+  </article>
+`)
+.join("");
 
     recommendationGrid
       .querySelectorAll(".recommendation-button")
@@ -791,6 +1213,8 @@ function handleBookClick(id) {
 
   openBook(book);
 }
+
+
 
 async function performSearch(query, openFullPage = false) {
   const trimmed = query.trim();
@@ -867,24 +1291,124 @@ document.addEventListener("click", event => {
 });
 
 
-$("#categoryFilters").addEventListener("click", event => {
-  const button = event.target.closest(".category");
-  if (!button) return;
 
-  document.querySelectorAll(".category").forEach(b => b.classList.remove("active"));
-  button.classList.add("active");
 
-  state.currentCategory = button.dataset.category;
-  
-  renderHome();
+
+let categoryRequestId = 0;
+
+const categoryFilters = document.getElementById("categoryFilters");
+categoryFilters.scrollLeft = 0;
+
+categoryFilters.addEventListener("click", async (event) => {
+    const button = event.target.closest(".category");
+
+    if (!button || !categoryFilters.contains(button)) return;
+
+    console.log("Clicked category:", button.dataset.category);
+
+    if (button.classList.contains("active")) return;
+
+    const requestId = ++categoryRequestId;
+
+    categoryFilters.querySelectorAll(".category").forEach(item => {
+        item.classList.toggle("active", item === button);
+    });
+
+    state.currentCategory = button.dataset.category;
+
+    try {
+        const books = await getDiscoverBooks(
+            20,
+            state.currentCategory
+        );
+
+        if (requestId !== categoryRequestId) return;
+
+        window.__discoverBooks = books;
+
+        const visibleBooks = books.slice(0, 17);
+
+        homeGrid.innerHTML = visibleBooks.length
+            ? visibleBooks.map(book => bookCard(book)).join("")
+            : `<div class="empty-state">
+                   No books found in this category.
+               </div>`;
+    } catch (error) {
+        if (requestId !== categoryRequestId) return;
+
+        console.error("Category loading error:", error);
+        homeGrid.innerHTML = `<div class="empty-state">
+            Could not load books. Check the console for details.
+        </div>`;
+    }
 });
 
-$("#backHome").addEventListener("click", () => {
+
+
+likedButton?.addEventListener("click", async () => {
+  await loadLikedBooks();
+  await renderLikedBooks();
+  showView(likedView);
+});
+
+backFromLiked?.addEventListener("click", () => {
   showView(homeView);
+});
+
+
+$("#backHome").addEventListener("click", () => {
+  const previousBook = state.detailHistory.pop();
+
+  if (previousBook) {
+    openBook(previousBook, false);
+    return;
+  }
+
+  const returnView = state.detailReturnView || homeView;
+  state.detailReturnView = null;
+  state.currentBook = null;
+  showView(returnView);
 });
 
 $("#backHomeFromSearch").addEventListener("click", () => {
   showView(homeView);
 });
 
-renderHome();
+
+const personalizedGrid = document.getElementById("personalizedGrid");
+
+if (personalizedGrid) {
+  personalizedGrid.addEventListener("click", event => {
+    // The heart has its own click handler.
+    if (event.target.closest(".like-button")) return;
+
+    const button = event.target.closest(".personalized-book-button");
+    if (!button) return;
+
+    const index = Number(button.dataset.recommendationIndex);
+    const book = window.__personalizedBooks?.[index];
+
+    if (!book) {
+      console.error("Recommendation not found at index:", index);
+      return;
+    }
+
+    openBook(book);
+  });
+}
+
+
+
+// Load saved likes first, then display the books.
+async function initializeBookMatch() {
+  try {
+    await loadLikedBooks();
+  } catch (error) {
+    console.error("Could not initialize liked books:", error);
+  }
+
+  await renderHome();
+  await renderPersonalizedRecommendations();
+}
+
+initializeBookMatch();

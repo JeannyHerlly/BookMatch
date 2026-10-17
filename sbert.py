@@ -1,10 +1,15 @@
 from sentence_transformers import SentenceTransformer
-import ast  #turn the author_set back into a set 
+import ast  
 import pandas as pd
+import numpy as np
 
 # Load processed dataset
-processed_books = pd.read_csv(r"C:\Users\LOQ\project_books\.venv\datas\processed_books_dataset.csv")
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA_PATH = BASE_DIR / "data" / "processed_books_dataset.csv"
+
+processed_books = pd.read_csv(DATA_PATH)
 # Load SBERT model ONCE
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -12,20 +17,25 @@ processed_books["author_set"] = processed_books["author_set"].apply(
     ast.literal_eval
 )
 
-title_embeddings = model.encode(
-    processed_books["title_clean"].fillna("").tolist(),
-    show_progress_bar=True
-)
+# Step 1: don't fillna — track missingness
+has_desc = processed_books['description'].notna() & (processed_books['description'].str.strip().str.len() > 6)
+has_cat  = processed_books['categories'].notna()  & (processed_books['categories'].str.strip().str.len()  > 0)
 
-category_embeddings = model.encode(
-    processed_books["category_clean"].fillna("").tolist(),
-    show_progress_bar=True
-)
+# Step 2: encode only real values; use a zero vector for missing
+def encode_masked(series, mask):
+    emb = np.zeros((len(series), 384), dtype=np.float32)
+    if mask.any():
+        emb[mask.values] = model.encode(
+            series[mask].tolist(),
+            normalize_embeddings=True,
+            batch_size=64,
+            show_progress_bar=True
+        )
+    return emb
 
-description_embeddings = model.encode(
-    processed_books["clean_description"].fillna("").tolist(),
-    show_progress_bar=True
-)
+title_embeddings = encode_masked(processed_books['title'].fillna(''), processed_books['title'].notna())
+category_embeddings   = encode_masked(processed_books['categories'].fillna(''), has_cat)
+description_embeddings  = encode_masked(processed_books['description'].fillna(''), has_desc)
 
 from sklearn.metrics.pairwise import cosine_similarity
 title_similarity = cosine_similarity(title_embeddings)
@@ -109,6 +119,8 @@ def clean_author(author):
 
 
 AUTHOR_BONUS = 0.1
+AWARD_BONUS = 0.02
+BESTSELLER_BONUS = 0.02
 
 def recommend_books(title, author=None, n=10):
     title_clean = clean_title(title)
@@ -163,14 +175,26 @@ def recommend_books(title, author=None, n=10):
 
         author_bonus = AUTHOR_BONUS if same_author else 0
 
-        final_score = similarity + author_bonus
+        candidate_book = processed_books.iloc[book_idx]
+
+        is_award_winner = candidate_book["is_award_winner"]
+        is_bestseller = candidate_book["is_bestseller"]
+
+        award_bonus = (AWARD_BONUS if is_award_winner else 0.0)
+        bestseller_bonus = (BESTSELLER_BONUS if is_bestseller else 0.0)
+
+
+        final_score = similarity + author_bonus + award_bonus + bestseller_bonus
 
         recommendations.append({
             "index": book_idx,
             "similarity": similarity,
             "author_bonus": author_bonus,
             "final_score": final_score,
-            "same_book": same_book
+            "same_book": same_book,
+            "award_winning": is_award_winner,
+            "award_books": candidate_book["award_names"],
+            "bestseller": is_bestseller
         })
 
     recommendations.sort(
@@ -185,7 +209,7 @@ def recommend_books(title, author=None, n=10):
     ]
 
     results = processed_books.iloc[book_indices][
-        ["title", "authors", "categories"]
+        ["title", "authors", "categories","description"]
     ].copy()
 
     results["similarity"] = [
@@ -203,5 +227,75 @@ def recommend_books(title, author=None, n=10):
     results["same_book"] = [
         x["same_book"] for x in recommendations
     ]
+
+    results["award_winning"] = [
+        x["award_winning"] for x in recommendations
+    ]
+
+    results["award_books"] = [
+        x["award_books"] for x in recommendations
+    ]
+
+    results["bestseller"] = [
+        x["bestseller"] for x in recommendations
+    ]
+
+    return results
+
+
+def recommend_from_likes(liked_google_ids, n=10):
+    if not liked_google_ids:
+        return pd.DataFrame()
+
+    # Find the dataset positions of books the user liked.
+    liked_positions = [
+        i
+        for i, google_id in enumerate(
+            processed_books["google_id"].fillna("").astype(str)
+        )
+        if google_id in set(liked_google_ids)
+    ]
+
+    if not liked_positions:
+        return pd.DataFrame()
+
+    liked_ids = set(liked_google_ids)
+    scores = {}
+
+    # Score each candidate against every liked book.
+    for candidate_idx in range(len(processed_books)):
+        candidate = processed_books.iloc[candidate_idx]
+        candidate_id = str(candidate["google_id"])
+
+        # Never recommend a book the user already liked.
+        if candidate_id in liked_ids:
+            continue
+
+        similarities = [
+            float(final_similarity[liked_idx, candidate_idx])
+            for liked_idx in liked_positions
+        ]
+
+        # Best match to any of the user's liked books.
+        score = max(similarities)
+
+        # Small optional bonus for award-winning books.
+        is_award_winner = candidate.get("is_award_winner", False)
+        if str(is_award_winner).strip().lower() in ("true", "1"):
+            score += AWARD_BONUS
+
+        scores[candidate_idx] = score
+
+    ranked_positions = sorted(
+        scores,
+        key=scores.get,
+        reverse=True
+    )[:n]
+
+    results = processed_books.iloc[ranked_positions].copy()
+    results["final_score"] = [
+        scores[i] for i in ranked_positions
+    ]
+    results["similarity"] = results["final_score"]
 
     return results

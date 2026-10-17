@@ -29,6 +29,12 @@
             </div>
 
         </div>
+        
+        <button id="openLikedBooks" class="nav-liked-button" type="button">
+        <span aria-hidden="true">♥</span>
+        Liked
+        <span id="likedCount" class="liked-count">0</span>
+        </button>
 
     </header>
 
@@ -55,36 +61,129 @@
 
             </div>
 
+            <hr class="section-divider">
 
-            <!-- CATEGORY BUTTONS -->
+                        <!-- PERSONALIZED RECOMMENDATIONS -->
 
-            <nav id="categoryFilters" class="category-filters">
+<section class="personalized-section" id="personalizedSection">
+    <!-- Only visible when there are liked books -->
+    <div id="personalizedHeading" hidden>
+        <h2>Recommended For You</h2>
+        <p>Books selected based on the books you've liked.</p>
+    </div>
 
-                <button
-                    class="category active"
-                    data-category="All">
-                    All
-                </button>
 
-                <button
-                    class="category"
-                    data-category="Fiction">
-                    Fiction
-                </button>
+    <!-- Recommendations appear here -->
+    <div id="personalizedGrid" class="book-grid"></div>
 
-                <button
-                    class="category"
-                    data-category="Drama">
-                    Drama
-                </button>
+</section>
 
-                <button
-                    class="category"
-                    data-category="Fantasy">
-                    Fantasy
-                </button>
 
-            </nav>
+
+
+<!-- OTHER BOOKS -->
+
+<div class="other-books-heading">
+    <h2>Books to Explore</h2>
+
+    <!-- Visible when there are no liked books -->
+<p id="personalizedEmptyMessage">
+        Like a few books to get personalized recommendations.
+</p>
+</div>
+
+<!-- CATEGORY BUTTONS -->
+<nav id="categoryFilters" class="category-filters">
+    <button
+        type="button"
+        class="category active"
+        data-category="All">
+        All
+    </button>
+
+    <button 
+        type="button"
+        class="category"
+        data-category="Bestseller">Bestseller
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Fiction">
+        Fiction
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Drama">
+        Drama
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Fantasy">
+        Fantasy
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Mystery">
+        Mystery
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Romance">
+        Romance
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Thriller">
+        Thriller
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Science Fiction">
+        Science Fiction
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="History">
+        History
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Biography">
+        Biography
+    </button>
+
+    <button
+        type="button"
+        class="category"
+        data-category="Award Winners">
+        Award Winners
+    </button>
+</nav>
+
+<!-- OTHER BOOKS GRID -->
+<section id="otherBooksSection">
+    <div id="homeGrid" class="book-grid"></div>
+</section>
+
+    
 
 
             <!-- BOOKS -->
@@ -110,7 +209,7 @@
             <button
                 id="backHomeFromSearch"
                 class="back-link">
-                ← All Books
+                ← Previous Page
             </button>
 
             <div class="section-heading">
@@ -140,7 +239,7 @@
             <button
                 id="backHome"
                 class="back-link">
-                ← All Books
+                ← Previous Page
             </button>
 
 
@@ -178,6 +277,22 @@
             </section>
 
         </section>
+        
+        <!-- LIKED BOOKS PAGE -->
+        <section id="likedView" class="view hidden">
+        <button id="backFromLiked" class="back-link" type="button">
+            ← Back to Discover
+        </button>
+
+        <div class="section-heading liked-page-heading">
+            <p class="eyebrow">YOUR LIBRARY</p>
+            <h1>Liked Books</h1>
+            <p>Your saved shelf, all in one place.</p>
+        </div>
+
+        <div id="likedGrid" class="book-grid liked-grid"></div>
+        </section>
+
 
     </main>
 
