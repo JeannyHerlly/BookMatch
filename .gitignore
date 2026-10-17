@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Local configuration and generated data
+.env
+.env.*
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Notebook and test artifacts
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

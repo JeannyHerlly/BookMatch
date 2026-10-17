@@ -38,6 +38,14 @@ def books_to_json(df):
 
 app = Flask(__name__)
 
+with sqlite3.connect(DB_PATH) as connection:
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS liked_books (
+            google_id TEXT PRIMARY KEY,
+            liked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
 
 @app.route("/")
 def home():
