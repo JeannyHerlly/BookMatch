@@ -50,9 +50,10 @@ respective providers and review their terms before use.
 Create a `data/` directory and provide the input files expected by the
 notebooks:
 
-- `books_dataset.csv` — source catalogue with the book fields used in
+- `books_enriched.csv` — enriched source catalogue with the book fields used in
   `notebooks/data_processing.ipynb`.
-- `books.db` — award tables used by the processing notebook.
+- `books.db` — award tables used by
+  `notebooks/bestseller_awardwinner.ipynb`.
 - `books_by_award.csv`, `award_matches.csv`, and CSV exports in `bestsellers/`
   — award and bestseller matching inputs used by
   `notebooks/bestseller_awardwinner.ipynb`.
