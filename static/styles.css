@@ -1055,6 +1055,36 @@ main {
   transform: translate(-50%, 0);
 }
 
+.site-attribution {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 18px 22px;
+  color: #817a76;
+  font-size: 11px;
+}
+
+.google-attribution {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.google-attribution img {
+  display: block;
+  width: 64px;
+  height: auto;
+}
+
+.google-attribution:focus-visible {
+  outline: 2px solid #6b5b95;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 @media (max-width: 850px) {
   .hero {
     min-height: 150px;

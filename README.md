@@ -70,7 +70,8 @@ The project assembled its catalogue from multiple sources:
 
 - **Google Books API** supplies bibliographic metadata such as titles, authors,
   descriptions, categories, publication details, identifiers, and cover
-  thumbnails. See the [Google Books APIs documentation](https://developers.google.com/books/docs/v1/using).
+  thumbnails. The app includes a subtle "Powered by Google" attribution in its
+  footer. See the [Google Books APIs documentation](https://developers.google.com/books/docs/v1/using).
 - **Open Library** supplements book metadata, especially subjects/categories
   and descriptions where available. Its Search API and work records are used
   by `scripts/fetch_openlibrary.py`; see the
