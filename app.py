@@ -2,8 +2,11 @@ from flask import Flask, request, jsonify, render_template
 import pandas as pd
 import sqlite3
 from pathlib import Path
+import os
 
-DB_PATH = Path(__file__).resolve().parent / "bookmatch.db"
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+DB_PATH = DATA_DIR / "bookmatch.db"
 
 from sbert import (recommend_books, recommend_from_likes, processed_books)
 
@@ -38,6 +41,8 @@ def books_to_json(df):
 
 app = Flask(__name__)
 
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 with sqlite3.connect(DB_PATH) as connection:
     connection.execute("""
         CREATE TABLE IF NOT EXISTS liked_books (
@@ -50,6 +55,12 @@ with sqlite3.connect(DB_PATH) as connection:
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/healthz")
+def health_check():
+    return jsonify({"status": "ok"})
+
 
 @app.route("/api/search")
 def search():

@@ -5,9 +5,11 @@ import numpy as np
 
 # Load processed dataset
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_PATH = BASE_DIR / "data" / "processed_books_with_bestsellers.csv"
+DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
+DATA_PATH = DATA_DIR / "processed_books_with_bestsellers.csv"
 
 processed_books = pd.read_csv(DATA_PATH)
 # Load SBERT model ONCE

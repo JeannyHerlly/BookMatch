@@ -88,6 +88,37 @@ python app.py
 
 Then open <http://127.0.0.1:5000>.
 
+## Deploy a public demo on Render
+
+The repository includes a Render Blueprint in `render.yaml`. The app needs its
+processed book catalogue at runtime, but dataset files are not committed to
+GitHub. Before deploying:
+
+1. Confirm you have permission to host and serve the processed dataset. A
+   private download URL does not grant redistribution rights.
+2. Put `processed_books_with_bestsellers.csv` in private object storage that
+   provides a direct HTTPS download URL. If access requires a bearer token,
+   configure it separately as `BOOK_DATA_TOKEN`.
+3. In Render, create a Blueprint from this repository and set:
+   - `BOOK_DATA_URL` to the direct HTTPS URL for the processed CSV.
+   - `BOOK_DATA_TOKEN` if the URL requires a bearer token.
+   - `BOOK_DATA_SHA256` optionally, to verify the downloaded file.
+4. Deploy. The start script downloads and validates the CSV onto the
+   persistent `/var/data` disk before loading the recommendation model.
+   The dataset, Hugging Face model cache, and likes database remain on that
+   disk across service restarts.
+
+The Blueprint uses a paid Render web-service plan because Render persistent
+disks are not available on its free web services. Review Render's current
+pricing before deploying. The first startup downloads the sentence-transformer
+model and may take several minutes; later startups can reuse the disk cache.
+After deployment, share the public `onrender.com` URL with visitors. Do not
+share the local `127.0.0.1` address.
+
+`BOOK_DATA_URL` should point directly to the CSV bytes, not to a preview or
+login page. The downloader requires HTTPS, validates the expected CSV columns,
+and never includes the configured token in its error message.
+
 ## Recommendation approach
 
 The recommender precomputes normalized sentence embeddings for titles,
