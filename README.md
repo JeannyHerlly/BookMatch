@@ -121,6 +121,51 @@ Search engines are asked not to index the site, but this is only a
 discoverability hint: anyone with the URL can visit and share it. This is not
 password protection.
 
+## Try a free PythonAnywhere deployment
+
+PythonAnywhere supports Flask web apps, but its free account has limited
+storage and restricted outbound network access. This app needs space for its
+Python dependencies, the processed catalogue, and the Sentence Transformers
+model. Check current free-account storage limits before installing; the
+complete environment may not fit. Initial dataset/model downloads and
+recommendation initialization can also exceed free-tier startup resources.
+
+1. Create a PythonAnywhere account and open a Bash console.
+2. Clone `https://github.com/JeannyHerlly/book-recommender.git` into your home
+   directory; this creates a `book-recommender` folder. In the console,
+   create a virtual environment and install
+   `requirements.txt` using Python 3.12, or choose a Python version supported
+   by the current PythonAnywhere plan.
+3. Store your Hugging Face read token outside the repository. In the Bash
+   console, run:
+
+   ```bash
+   python -c 'from getpass import getpass; from pathlib import Path; import os; p=Path.home()/".bookmatch-secrets"; p.write_text("BOOK_DATA_TOKEN="+getpass("Hugging Face read token: ")+"\n"); os.chmod(p, 0o600)'
+   ```
+
+4. Create a Flask web app in PythonAnywhere using the same Python version as
+   the virtual environment. Set its virtualenv path to that environment.
+5. Edit the WSGI configuration file and replace its contents with:
+
+   ```python
+   import sys
+   sys.path.insert(0, "/home/YOUR_USERNAME/book-recommender")
+   from pythonanywhere_wsgi import application
+   ```
+
+   Replace `YOUR_USERNAME` with your PythonAnywhere username and adjust the
+   path if you named the clone folder differently.
+6. Reload the web app. The WSGI setup downloads the CSV into your home
+   directory if it is missing, then loads the recommender. Open the
+   `YOUR_USERNAME.pythonanywhere.com` URL shown on the Web tab.
+
+The token is read from `~/.bookmatch-secrets`, not committed to Git. Free
+accounts have restricted outbound access; verify that Hugging Face and its
+download/CDN hosts remain allowlisted. If the app fails to start or exceeds
+storage or resource limits, inspect the error log on the PythonAnywhere Web
+tab before retrying. Likes and downloaded data are stored under your account
+home directory.
+
 ## Hugging Face Spaces alternative
 
 Hugging Face Spaces can also run this Docker app, but free Docker CPU hosting
