@@ -36,6 +36,7 @@ static/                        Frontend JavaScript and CSS
 templates/                     Flask HTML template
 scripts/
   fetch_google_books.py        Fetch Google Books volume metadata
+  fetch_openlibrary.py         Fetch Open Library work/search metadata
   scrape_wikipedia_table.py    Export a Wikipedia article table to CSV
 notebooks/
   data_processing.ipynb        Clean and prepare the core book catalogue
@@ -70,6 +71,12 @@ The project assembled its catalogue from multiple sources:
 - **Google Books API** supplies bibliographic metadata such as titles, authors,
   descriptions, categories, publication details, identifiers, and cover
   thumbnails. See the [Google Books APIs documentation](https://developers.google.com/books/docs/v1/using).
+- **Open Library** supplements book metadata, especially subjects/categories
+  and descriptions where available. Its Search API and work records are used
+  by `scripts/fetch_openlibrary.py`; see the
+  [Open Library APIs](https://openlibrary.org/developers/api). Open Library
+  records are community-maintained and may be incomplete or mismatched, so
+  review matches before merging them into the catalogue.
 - **Wikipedia tables** were used as input lists for bestseller titles and
   award-winning books. Wikipedia content is available under its applicable
   [licensing terms](https://en.wikipedia.org/wiki/Wikipedia:Copyrights);
@@ -103,10 +110,25 @@ python scripts/fetch_google_books.py `
   --output data/books_enriched.csv
 ```
 
-The Google Books helper retrieves only the records returned for the supplied
-queries; it is not a complete export of Google Books. Review the
-[Google Books API terms](https://developers.google.com/books/terms) and
-Wikipedia article licenses before using or redistributing collected data.
+Open Library can also be queried by title, author, or other Search API terms:
+
+```powershell
+python scripts/fetch_openlibrary.py `
+  --query "title:example author:example" `
+  --limit-per-query 100 `
+  --include-descriptions `
+  --output data/openlibrary_books.csv
+```
+
+Set `OPENLIBRARY_CONTACT` to an email address or project URL to identify your
+script in the API User-Agent. Description fetching makes one additional
+request per matching work and is intentionally rate-limited; omit
+`--include-descriptions` when subjects and work identifiers are sufficient.
+Both API helpers retrieve only records returned for their supplied queries;
+neither is a complete export of its catalogue. Review the
+[Google Books API terms](https://developers.google.com/books/terms),
+[Open Library's data-use guidance](https://openlibrary.org/developers/licensing),
+and Wikipedia article licenses before using or redistributing collected data.
 Keep the exact source article URLs and retrieval dates with your local data
 notes so that the scraped tables can be attributed and refreshed responsibly.
 
