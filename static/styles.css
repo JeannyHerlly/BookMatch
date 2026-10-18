@@ -1075,8 +1075,8 @@ main {
 
 .google-attribution img {
   display: block;
-  width: 64px;
-  height: auto;
+  width: 62px;
+  height: 30px;
 }
 
 .google-attribution:focus-visible {
