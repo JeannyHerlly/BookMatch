@@ -38,26 +38,29 @@ def encode_masked(series, mask):
         )
     return emb
 
-title_embeddings = encode_masked(processed_books['title'].fillna(''), processed_books['title'].notna())
+title_embeddings = encode_masked(
+    processed_books["title"].fillna(""),
+    processed_books["title"].notna(),
+)
 category_embeddings = encode_masked(category_text, has_cat)
 description_embeddings = encode_masked(description_text, has_desc)
 
-from sklearn.metrics.pairwise import cosine_similarity
-title_similarity = cosine_similarity(title_embeddings)
-
-category_similarity = cosine_similarity(category_embeddings)
-
-description_similarity = cosine_similarity(description_embeddings)
-
-title_weight = 0.525
-category_weight = 0.05
-description_weight = 0.425
-
-final_similarity = (
-    title_weight * title_similarity +
-    category_weight * category_similarity +
-    description_weight * description_similarity
+final_similarity = np.zeros(
+    (len(processed_books), len(processed_books)),
+    dtype=np.float32,
 )
+for embeddings, weight in (
+    (title_embeddings, 0.525),
+    (category_embeddings, 0.05),
+    (description_embeddings, 0.425),
+):
+    for start in range(0, len(processed_books), 64):
+        stop = min(start + 64, len(processed_books))
+        final_similarity[start:stop] += (
+            embeddings[start:stop] @ embeddings.T
+        ) * weight
+
+del title_embeddings, category_embeddings, description_embeddings, model
 
 
 from rapidfuzz import fuzz

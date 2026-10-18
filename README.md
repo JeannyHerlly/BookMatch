@@ -94,47 +94,40 @@ python app.py
 
 Then open <http://127.0.0.1:5000>.
 
-## Deploy a public demo on Render
+## Free public demo on Render
 
-The repository includes a Render Blueprint in `render.yaml`. The app needs its
-processed book catalogue at runtime, but dataset files are not committed to
-GitHub. Before deploying:
+The repository includes a free Render Blueprint in `render.yaml`. Render Free
+services sleep after inactivity, use ephemeral storage, and have limited memory.
+The app downloads its dataset and sentence-transformer model at startup, so
+initial startup and wake-ups may take several minutes. Likes can be lost when
+the service restarts or redeploys. Render's free limits can change; review its
+current pricing and resource limits before deploying.
 
-1. Confirm you have permission to host and serve the processed dataset. A
-   private download URL does not grant redistribution rights.
-2. Put `processed_books_with_bestsellers.csv` in private object storage that
-   provides a direct HTTPS download URL. If access requires a bearer token,
-   configure it separately as `BOOK_DATA_TOKEN`.
-3. In Render, create a Blueprint from this repository and set:
+1. Confirm you have permission to publicly serve the processed catalogue.
+2. In Render, create a Blueprint from this repository and set:
    - `BOOK_DATA_URL` to the direct HTTPS URL for the processed CSV.
-   - `BOOK_DATA_TOKEN` if the URL requires a bearer token.
+   - `BOOK_DATA_TOKEN` to a Hugging Face read token (keep it secret).
    - `BOOK_DATA_SHA256` optionally, to verify the downloaded file.
-4. Deploy. The start script downloads and validates the CSV onto the
-   persistent `/var/data` disk before loading the recommendation model.
-   The dataset, Hugging Face model cache, and likes database remain on that
-   disk across service restarts.
-
-The Blueprint uses a paid Render web-service plan because Render persistent
-disks are not available on its free web services. Review Render's current
-pricing before deploying. The first startup downloads the sentence-transformer
-model and may take several minutes; later startups can reuse the disk cache.
-After deployment, share the public `onrender.com` URL with visitors. Do not
-share the local `127.0.0.1` address.
+3. Deploy the Blueprint and share the public `onrender.com` URL with visitors.
+   Do not share the local `127.0.0.1` address.
 
 `BOOK_DATA_URL` should point directly to the CSV bytes, not to a preview or
 login page. The downloader requires HTTPS, validates the expected CSV columns,
 and never includes the configured token in its error message.
 
-## Link-shared demo on Hugging Face Spaces
+Render's free services do not include persistent disks. The service uses
+temporary storage for the catalogue, downloaded model, and likes database.
+Search engines are asked not to index the site, but this is only a
+discoverability hint: anyone with the URL can visit and share it. This is not
+password protection.
 
-This repository is also configured as a Docker Space. The free CPU tier is a
-good first demo target for this catalogue (about 5,200 books), but it can sleep
-when idle and may take several minutes to wake while the dataset and model load.
-Free-tier hardware limits can change; check the current options when creating
-the Space. Do not configure paid hardware if you want to stay on the free tier.
+## Hugging Face Spaces alternative
 
-1. In Hugging Face, create a **public Space** and choose **Docker** as its SDK.
-   Select the free CPU hardware option.
+Hugging Face Spaces can also run this Docker app, but free Docker CPU hosting
+may require a paid PRO subscription. Check current account eligibility and
+pricing before creating a Space.
+
+1. Create a **public Space** and choose **Docker** as its SDK.
 2. Add a Space secret named `HF_TOKEN` with a read token that has access to the
    private dataset.
 3. Add a Space variable named `BOOK_DATA_URL` with the direct CSV URL:
@@ -162,9 +155,8 @@ not change whether you have permission to display the dataset. For actual
 access control, use a private Space; viewers will need authorized Hugging Face
 accounts.
 
-The Space filesystem is not a substitute for persistent storage. Likes may be
-lost when the Space is rebuilt or its local storage is reset. A sleeping Space
-can also make the first visit slow.
+The Space filesystem may not persist across rebuilds or resets. Likes can be
+lost, and a sleeping Space can make the first visit slow.
 
 ## Recommendation approach
 
