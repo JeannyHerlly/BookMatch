@@ -12,8 +12,6 @@ REQUIRED_COLUMNS = {
     "google_id",
     "title",
     "authors",
-    "categories",
-    "description",
     "thumbnail",
     "published_date",
     "title_clean",
@@ -23,6 +21,21 @@ REQUIRED_COLUMNS = {
     "is_award_winner",
     "award_names",
     "is_bestseller",
+}
+
+COLUMN_ALIASES = {
+    "categories": (
+        "categories_clean",
+        "category_clean",
+        "categories_final",
+        "search_category",
+        "openlibrary_categories",
+    ),
+    "description": (
+        "clean_description",
+        "description_final",
+        "openlibrary_description",
+    ),
 }
 
 
@@ -39,7 +52,13 @@ def validate_dataset(path: Path) -> None:
     if not columns:
         raise RuntimeError(f"The book dataset at {path} is empty.")
 
-    missing = sorted(REQUIRED_COLUMNS.difference(columns))
+    missing = REQUIRED_COLUMNS.difference(columns)
+    missing.update(
+        field
+        for field, aliases in COLUMN_ALIASES.items()
+        if field not in columns and not any(alias in columns for alias in aliases)
+    )
+    missing = sorted(missing)
     if missing:
         raise RuntimeError(
             "The processed book dataset is missing required columns: "
@@ -114,6 +133,9 @@ def ensure_dataset() -> Path:
     download_dataset(
         destination,
         url,
-        os.environ.get("BOOK_DATA_TOKEN", "").strip(),
+        (
+            os.environ.get("BOOK_DATA_TOKEN")
+            or os.environ.get("HF_TOKEN", "")
+        ).strip(),
     )
     return destination
