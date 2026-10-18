@@ -12,6 +12,23 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR / "data"))
 DATA_PATH = DATA_DIR / "processed_books_with_bestsellers.csv"
 
 processed_books = pd.read_csv(DATA_PATH)
+
+for target_column, candidates in {
+    "categories": ("categories_final", "search_category", "openlibrary_categories"),
+    "description": ("description_final", "clean_description", "openlibrary_description"),
+}.items():
+    if target_column not in processed_books:
+        source_column = next(
+            (column for column in candidates if column in processed_books),
+            None,
+        )
+        if source_column is None:
+            raise ValueError(
+                f"The processed book dataset is missing {target_column!r} "
+                f"and its supported alternatives: {', '.join(candidates)}."
+            )
+        processed_books[target_column] = processed_books[source_column]
+
 # Load SBERT model ONCE
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -19,11 +36,17 @@ processed_books["author_set"] = processed_books["author_set"].apply(
     ast.literal_eval
 )
 
-# Step 1: don't fillna — track missingness
-has_desc = processed_books['description'].notna() & (processed_books['description'].str.strip().str.len() > 6)
-has_cat  = processed_books['categories'].notna()  & (processed_books['categories'].str.strip().str.len()  > 0)
+description_text = processed_books.get(
+    "clean_description", processed_books["description"]
+).fillna("").astype(str)
+category_text = processed_books.get(
+    "category_clean", processed_books["categories"]
+).fillna("").astype(str)
 
-# Step 2: encode only real values; use a zero vector for missing
+has_desc = description_text.str.strip().str.len() > 6
+has_cat = category_text.str.strip().str.len() > 0
+
+# Encode only non-empty values; use a zero vector for missing
 def encode_masked(series, mask):
     emb = np.zeros((len(series), 384), dtype=np.float32)
     if mask.any():
@@ -36,8 +59,8 @@ def encode_masked(series, mask):
     return emb
 
 title_embeddings = encode_masked(processed_books['title'].fillna(''), processed_books['title'].notna())
-category_embeddings   = encode_masked(processed_books['categories'].fillna(''), has_cat)
-description_embeddings  = encode_masked(processed_books['description'].fillna(''), has_desc)
+category_embeddings = encode_masked(category_text, has_cat)
+description_embeddings = encode_masked(description_text, has_desc)
 
 from sklearn.metrics.pairwise import cosine_similarity
 title_similarity = cosine_similarity(title_embeddings)
