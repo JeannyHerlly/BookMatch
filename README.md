@@ -1,3 +1,9 @@
+---
+title: BookMatch - Book Recommender
+sdk: docker
+app_port: 7860
+---
+
 # Book Recommender
 
 A book discovery app built with Flask. Search and filter a book catalogue, save
@@ -69,8 +75,8 @@ data/processed_books_with_bestsellers.csv
 
 Before running the app, confirm the final CSV includes the columns used by
 `sbert.py`, including `google_id`, `title`, `authors`, `categories`,
-`description`, `author_set`, `title_clean`, `category_clean`,
-`is_award_winner`, `award_names`, and `is_bestseller`.
+`description`, `author_set`, `title_clean`, `author_clean`, `category_clean`,
+`clean_description`, `is_award_winner`, `award_names`, and `is_bestseller`.
 
 The notebooks preserve the project’s data preparation and matching workflow.
 Award matching uses manually verified relationships in `award_matches.csv`;
@@ -118,6 +124,47 @@ share the local `127.0.0.1` address.
 `BOOK_DATA_URL` should point directly to the CSV bytes, not to a preview or
 login page. The downloader requires HTTPS, validates the expected CSV columns,
 and never includes the configured token in its error message.
+
+## Link-shared demo on Hugging Face Spaces
+
+This repository is also configured as a Docker Space. The free CPU tier is a
+good first demo target for this catalogue (about 5,200 books), but it can sleep
+when idle and may take several minutes to wake while the dataset and model load.
+Free-tier hardware limits can change; check the current options when creating
+the Space. Do not configure paid hardware if you want to stay on the free tier.
+
+1. In Hugging Face, create a **public Space** and choose **Docker** as its SDK.
+   Select the free CPU hardware option.
+2. Add a Space secret named `HF_TOKEN` with a read token that has access to the
+   private dataset.
+3. Add a Space variable named `BOOK_DATA_URL` with the direct CSV URL:
+
+   ```text
+   https://huggingface.co/datasets/Jeanny26/processed_books_with_bestsellers.csv/resolve/main/processed_books_with_bestseller_award.csv?download=true
+   ```
+
+4. Optionally set `BOOK_DATA_SHA256` to verify the file contents.
+5. Push this repository's `main` branch to the Space's Git remote. The Space
+   builds the Docker image and starts the app on port 7860.
+
+For the Space's Git remote, follow the repository-specific URL shown on its
+page; it will look like `https://huggingface.co/spaces/USERNAME/SPACE_NAME`.
+Keep `HF_TOKEN` in Space settings only. Visitors use the public Space URL; they
+do not need access to the private dataset repository. The app serves catalogue
+records through its public API, so only use a dataset you are permitted to
+redistribute through the demo.
+
+The app asks search engines not to index its pages, but this is only a
+discoverability hint. Hugging Face public Spaces can still be listed on
+Hugging Face, and anyone who gets the URL can visit it or share it. This is not
+password protection or a way to restrict access to invited people, and it does
+not change whether you have permission to display the dataset. For actual
+access control, use a private Space; viewers will need authorized Hugging Face
+accounts.
+
+The Space filesystem is not a substitute for persistent storage. Likes may be
+lost when the Space is rebuilt or its local storage is reset. A sleeping Space
+can also make the first visit slow.
 
 ## Recommendation approach
 

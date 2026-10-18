@@ -13,39 +13,6 @@ DATA_PATH = DATA_DIR / "processed_books_with_bestsellers.csv"
 
 processed_books = pd.read_csv(DATA_PATH)
 
-for target_column, candidates in {
-    "categories_clean": (
-        "category_clean",
-        "categories_final",
-        "search_category",
-        "openlibrary_categories",
-        "categories",
-    ),
-    "clean_description": (
-        "description_final",
-        "description",
-        "openlibrary_description",
-    ),
-}.items():
-    if target_column not in processed_books:
-        source_column = next(
-            (column for column in candidates if column in processed_books),
-            None,
-        )
-        if source_column is None:
-            raise ValueError(
-                f"The processed book dataset is missing {target_column!r} "
-                f"and its supported alternatives: {', '.join(candidates)}."
-            )
-        processed_books[target_column] = processed_books[source_column]
-
-for target_column, source_column in {
-    "categories": "categories_clean",
-    "description": "clean_description",
-}.items():
-    if target_column not in processed_books:
-        processed_books[target_column] = processed_books[source_column]
-
 # Load SBERT model ONCE
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -54,7 +21,7 @@ processed_books["author_set"] = processed_books["author_set"].apply(
 )
 
 description_text = processed_books["clean_description"].fillna("").astype(str)
-category_text = processed_books["categories_clean"].fillna("").astype(str)
+category_text = processed_books["category_clean"].fillna("").astype(str)
 
 has_desc = description_text.str.strip().str.len() > 6
 has_cat = category_text.str.strip().str.len() > 0

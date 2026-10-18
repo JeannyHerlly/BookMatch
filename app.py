@@ -41,6 +41,13 @@ def books_to_json(df):
 
 app = Flask(__name__)
 
+
+@app.after_request
+def prevent_search_indexing(response):
+    response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response
+
+
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 with sqlite3.connect(DB_PATH) as connection:

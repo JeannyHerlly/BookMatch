@@ -17,27 +17,12 @@ REQUIRED_COLUMNS = {
     "title_clean",
     "author_clean",
     "category_clean",
+    "clean_description",
     "author_set",
     "is_award_winner",
     "award_names",
     "is_bestseller",
 }
-
-COLUMN_ALIASES = {
-    "categories": (
-        "categories_clean",
-        "category_clean",
-        "categories_final",
-        "search_category",
-        "openlibrary_categories",
-    ),
-    "description": (
-        "clean_description",
-        "description_final",
-        "openlibrary_description",
-    ),
-}
-
 
 def validate_dataset(path: Path) -> None:
     try:
@@ -53,11 +38,6 @@ def validate_dataset(path: Path) -> None:
         raise RuntimeError(f"The book dataset at {path} is empty.")
 
     missing = REQUIRED_COLUMNS.difference(columns)
-    missing.update(
-        field
-        for field, aliases in COLUMN_ALIASES.items()
-        if field not in columns and not any(alias in columns for alias in aliases)
-    )
     missing = sorted(missing)
     if missing:
         raise RuntimeError(

@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+__pycache__
+**/__pycache__
+*.py[cod]
+.env
+.env.*
+.cache
+data
+*.db
+*.sqlite
+*.sqlite3
+notebooks
