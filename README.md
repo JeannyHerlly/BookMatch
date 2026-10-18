@@ -10,6 +10,15 @@ A book discovery app built with Flask. Search and filter a book catalogue, save
 liked books, and get recommendations based on book descriptions, categories,
 titles, and authors.
 
+## Live demo
+
+Try BookMatch at <https://jeannyherlly.pythonanywhere.com/>.
+
+The demo is publicly accessible; visitors do not need a PythonAnywhere account.
+It is hosted on a free PythonAnywhere account, so availability and resource
+limits are subject to that plan. The owner needs to renew the free site monthly.
+The demo is not password-protected, and its public API serves catalogue data.
+
 ## Features
 
 - Search books by title or author.
@@ -25,6 +34,9 @@ app.py                         Flask routes and likes API
 sbert.py                       Dataset loading, embeddings, and ranking
 static/                        Frontend JavaScript and CSS
 templates/                     Flask HTML template
+scripts/
+  fetch_google_books.py        Fetch Google Books volume metadata
+  scrape_wikipedia_table.py    Export a Wikipedia article table to CSV
 notebooks/
   data_processing.ipynb        Clean and prepare the core book catalogue
   bestseller_awardwinner.ipynb Match bestseller and award records
@@ -52,6 +64,51 @@ Datasets and SQLite databases are intentionally excluded from this repository.
 They can be subject to third-party licenses and terms, and should not be
 redistributed without permission. Obtain the required source files from their
 respective providers and review their terms before use.
+
+The project assembled its catalogue from multiple sources:
+
+- **Google Books API** supplies bibliographic metadata such as titles, authors,
+  descriptions, categories, publication details, identifiers, and cover
+  thumbnails. See the [Google Books APIs documentation](https://developers.google.com/books/docs/v1/using).
+- **Wikipedia tables** were used as input lists for bestseller titles and
+  award-winning books. Wikipedia content is available under its applicable
+  [licensing terms](https://en.wikipedia.org/wiki/Wikipedia:Copyrights);
+  attribute the exact article pages and revisions used when redistributing
+  derived list data.
+- Award relationships were reviewed and matched to Google Books records as
+  described below. Bestseller and award labels are source-derived metadata,
+  not an endorsement or an official ranking by this app.
+
+The source-collection helpers are in `scripts/`. For example, first inspect
+the tables in a Wikipedia article, then export the chosen table:
+
+```powershell
+python scripts/scrape_wikipedia_table.py `
+  --url "https://en.wikipedia.org/wiki/List_of_best-selling_books" `
+  --list-tables
+```
+
+Use the URL of the actual source article and the listed table index to export a
+specific table. For example, remove `--list-tables` and add
+`--table-index N --output data/bestsellers/example.csv`. To fetch book metadata
+from Google Books, pass one or more search queries; the API key is optional
+and, if used, should be stored in the `GOOGLE_BOOKS_API_KEY` environment
+variable rather than source code:
+
+```powershell
+python scripts/fetch_google_books.py `
+  --query "intitle:example subject:fiction" `
+  --query "inauthor:example" `
+  --limit-per-query 200 `
+  --output data/books_enriched.csv
+```
+
+The Google Books helper retrieves only the records returned for the supplied
+queries; it is not a complete export of Google Books. Review the
+[Google Books API terms](https://developers.google.com/books/terms) and
+Wikipedia article licenses before using or redistributing collected data.
+Keep the exact source article URLs and retrieval dates with your local data
+notes so that the scraped tables can be attributed and refreshed responsibly.
 
 Create a `data/` directory and provide the input files expected by the
 notebooks:
@@ -121,50 +178,16 @@ Search engines are asked not to index the site, but this is only a
 discoverability hint: anyone with the URL can visit and share it. This is not
 password protection.
 
-## Try a free PythonAnywhere deployment
+## PythonAnywhere demo hosting
 
-PythonAnywhere supports Flask web apps, but its free account has limited
-storage and restricted outbound network access. This app needs space for its
-Python dependencies, the processed catalogue, and the Sentence Transformers
-model. Check current free-account storage limits before installing; the
-complete environment may not fit. Initial dataset/model downloads and
-recommendation initialization can also exceed free-tier startup resources.
-
-1. Create a PythonAnywhere account and open a Bash console.
-2. Clone `https://github.com/JeannyHerlly/book-recommender.git` into your home
-   directory; this creates a `book-recommender` folder. In the console,
-   create a virtual environment and install
-   `requirements.txt` using Python 3.12, or choose a Python version supported
-   by the current PythonAnywhere plan.
-3. Store your Hugging Face read token outside the repository. In the Bash
-   console, run:
-
-   ```bash
-   python -c 'from getpass import getpass; from pathlib import Path; import os; p=Path.home()/".bookmatch-secrets"; p.write_text("BOOK_DATA_TOKEN="+getpass("Hugging Face read token: ")+"\n"); os.chmod(p, 0o600)'
-   ```
-
-4. Create a Flask web app in PythonAnywhere using the same Python version as
-   the virtual environment. Set its virtualenv path to that environment.
-5. Edit the WSGI configuration file and replace its contents with:
-
-   ```python
-   import sys
-   sys.path.insert(0, "/home/YOUR_USERNAME/book-recommender")
-   from pythonanywhere_wsgi import application
-   ```
-
-   Replace `YOUR_USERNAME` with your PythonAnywhere username and adjust the
-   path if you named the clone folder differently.
-6. Reload the web app. The WSGI setup downloads the CSV into your home
-   directory if it is missing, then loads the recommender. Open the
-   `YOUR_USERNAME.pythonanywhere.com` URL shown on the Web tab.
-
-The token is read from `~/.bookmatch-secrets`, not committed to Git. Free
-accounts have restricted outbound access; verify that Hugging Face and its
-download/CDN hosts remain allowlisted. If the app fails to start or exceeds
-storage or resource limits, inspect the error log on the PythonAnywhere Web
-tab before retrying. Likes and downloaded data are stored under your account
-home directory.
+The public demo uses a **separate PythonAnywhere deployment bundle** with a
+locally precomputed float16 SBERT similarity matrix. That hosting-specific
+bundle is not part of this GitHub repository; the GitHub/VS Code app continues
+to use the regular Sentence Transformers setup documented above. The hosted
+copy keeps its catalogue and liked-book database in the account's storage.
+Free-account quotas, outbound network access, and monthly renewal requirements
+can change, so check PythonAnywhere's current plan details before deploying
+another copy.
 
 ## Hugging Face Spaces alternative
 
