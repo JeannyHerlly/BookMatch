@@ -1,35 +1,47 @@
----
-title: BookMatch - Book Recommender
-sdk: docker
-app_port: 7860
----
+# BookMatch — Book Recommendation System
 
-# Book Recommender
+BookMatch is a Flask web application that helps readers discover books using semantic similarity, book metadata, and award/bestseller information. It demonstrates an end-to-end data science workflow, from data collection and preparation to recommendation ranking and web application development.
 
-A book discovery app built with Flask. Search and filter a book catalogue, save
-liked books, and get recommendations based on book descriptions, categories,
-titles, and authors.
-
-## Live demo
-
-Try BookMatch at <https://jeannyherlly.pythonanywhere.com/>.
-
-The demo is publicly accessible; visitors do not need a PythonAnywhere account.
-It is hosted on a free PythonAnywhere account, so availability and resource
-limits are subject to that plan. The owner needs to renew the free site monthly.
-The demo is not password-protected, and its public API serves catalogue data.
+**[Try the Live Demo](https://jeannyherlly.pythonanywhere.com/)**
 
 ## Features
 
 - Search books by title or author.
-- Browse the catalogue by genre, bestseller status, and award recognition.
-- Get recommendations for a selected book or based on saved likes.
-- Save and remove liked books in a local SQLite database.
-- Responsive book cards and detail pages.
+- Browse books by genre, bestseller status, and award recognition.
+- Get recommendations based on book content and saved likes.
+- Save and remove liked books.
 
-## Project structure
+## Recommendation System
+
+BookMatch uses **Sentence-BERT (`all-MiniLM-L6-v2`)** to generate embeddings from book titles, categories, and descriptions. Cosine similarity measures how closely books are related and serves as the primary basis for recommendation relevance.
+
+The ranking incorporates additional signals:
+
+- **Content similarity:** The main determinant of relevance.
+- **Author matching:** Handled separately to account for books with multiple authors and provide an additional bonus when authors match.
+- **Award-winning status:** Adds a ranking bonus rather than determining relevance on its own.
+- **Bestseller status:** Adds a ranking bonus rather than determining relevance on its own.
+
+For recommendations based on saved likes, the system considers the strongest similarity to any liked book and incorporates an award bonus.
+
+**Grid search** tests different weight combinations to identify the best-performing configuration according to the selected evaluation metric.
+
+## Data Collection and Preparation
+
+Datasets and SQLite databases are intentionally excluded from this repository. They can be subject to third-party licenses and terms, and should not be redistributed without permission. Obtain the required source files from their respective providers and review their terms before use.
+
+BookMatch combines data from multiple sources:
+•	**Google Books API**: Book metadata, descriptions, categories, ratings, and cover thumbnails.
+•	**Open Library:** Supplementary descriptions and subjects/categories.
+•	**Wikipedia:** Bestseller lists and award-related book lists.
+
+The data pipeline includes exploratory analysis, data cleaning, metadata enrichment, and matching books against award and bestseller lists. Award matches are manually reviewed before being incorporated into the final dataset.
+
+## Project Structure
 
 ```text
+
+Project structure
 app.py                         Flask routes and likes API
 sbert.py                       Dataset loading, embeddings, and ranking
 static/                        Frontend JavaScript and CSS
@@ -44,221 +56,70 @@ notebooks/
 data/                          Local input and generated files (not committed)
 ```
 
-## Setup
+## Limitations
 
-Use Python 3.10 or newer.
+- **Incomplete metadata:** Some books have missing descriptions, categories, or other information, limiting the details available for comparison.
+- **Metadata quality:** Some records contain generic, irrelevant, or insufficiently descriptive information, making it harder to distinguish books with similar categories but different themes.
+- **Duplicate records:** Some duplicates may remain because differences in titles, editions, ISBNs, or incomplete metadata make them difficult to identify reliably.
+- **Open Library coverage:** Some books could not be matched to Open Library records. Enrichment was also time-consuming, limiting the number of books that could be supplemented.
+- **Limited personalization:** Recommendations rely mainly on book content and saved likes rather than learning from a large dataset of user ratings or reading histories.
+- **Ranking limitations:** Similarity and award/bestseller bonuses do not guarantee relevance. Results depend on metadata quality, label accuracy, and ranking weights.
+- **Grid search limitations:** Weight optimization uses predefined test books and manually identified relevant books. Relevant recommendations absent from these reference lists are not counted as relevant. Using only a few test books per case may also bias the selected weights toward those books, limiting generalizability to the full catalogue.
+
+### Future Improvements
+
+- Improve metadata matching and duplicate detection.
+- Expand and diversify the recommendation evaluation set.
+- Evaluate recommendations using more comprehensive relevance judgments.
+- Incorporate user feedback to improve personalization.
+
+## Run Locally
+
+### Requirements
+
+- Python 3.10 or newer
+- The processed dataset expected by `sbert.py`
+
+### Installation
+
+Create and activate a virtual environment, then install the dependencies:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+```
+
+To work with the data-processing notebooks, also install:
+
+```powershell
 python -m pip install -r requirements-notebooks.txt
 ```
 
-The first run of `sbert.py` downloads the `all-MiniLM-L6-v2` model through
-Sentence Transformers. An internet connection is needed for that initial
-download.
+The first run downloads the `all-MiniLM-L6-v2` model through Sentence Transformers and requires an internet connection.
 
-## Data and processing
+### Start the Application
 
-Datasets and SQLite databases are intentionally excluded from this repository.
-They can be subject to third-party licenses and terms, and should not be
-redistributed without permission. Obtain the required source files from their
-respective providers and review their terms before use.
-
-The project assembled its catalogue from multiple sources:
-
-- **Google Books API** supplies bibliographic metadata such as titles, authors,
-  descriptions, categories, publication details, identifiers, and cover
-  thumbnails. The app includes a subtle "Powered by Google" attribution in its
-  footer. See the [Google Books APIs documentation](https://developers.google.com/books/docs/v1/using).
-- **Open Library** supplements book metadata, especially subjects/categories
-  and descriptions where available. Its Search API and work records are used
-  by `scripts/fetch_openlibrary.py`; see the
-  [Open Library APIs](https://openlibrary.org/developers/api). Open Library
-  records are community-maintained and may be incomplete or mismatched, so
-  review matches before merging them into the catalogue.
-- **Wikipedia tables** were used as input lists for bestseller titles and
-  award-winning books. Wikipedia content is available under its applicable
-  [licensing terms](https://en.wikipedia.org/wiki/Wikipedia:Copyrights);
-  attribute the exact article pages and revisions used when redistributing
-  derived list data.
-- Award relationships were reviewed and matched to Google Books records as
-  described below. Bestseller and award labels are source-derived metadata,
-  not an endorsement or an official ranking by this app.
-
-The source-collection helpers are in `scripts/`. For example, first inspect
-the tables in a Wikipedia article, then export the chosen table:
-
-```powershell
-python scripts/scrape_wikipedia_table.py `
-  --url "https://en.wikipedia.org/wiki/List_of_best-selling_books" `
-  --list-tables
-```
-
-Use the URL of the actual source article and the listed table index to export a
-specific table. For example, remove `--list-tables` and add
-`--table-index N --output data/bestsellers/example.csv`. To fetch book metadata
-from Google Books, pass one or more search queries; the API key is optional
-and, if used, should be stored in the `GOOGLE_BOOKS_API_KEY` environment
-variable rather than source code:
-
-```powershell
-python scripts/fetch_google_books.py `
-  --query "intitle:example subject:fiction" `
-  --query "inauthor:example" `
-  --limit-per-query 200 `
-  --output data/books_enriched.csv
-```
-
-Open Library can also be queried by title, author, or other Search API terms:
-
-```powershell
-python scripts/fetch_openlibrary.py `
-  --query "title:example author:example" `
-  --limit-per-query 100 `
-  --include-descriptions `
-  --output data/openlibrary_books.csv
-```
-
-Set `OPENLIBRARY_CONTACT` to an email address or project URL to identify your
-script in the API User-Agent. Description fetching makes one additional
-request per matching work and is intentionally rate-limited; omit
-`--include-descriptions` when subjects and work identifiers are sufficient.
-Both API helpers retrieve only records returned for their supplied queries;
-neither is a complete export of its catalogue. Review the
-[Google Books API terms](https://developers.google.com/books/terms),
-[Open Library's data-use guidance](https://openlibrary.org/developers/licensing),
-and Wikipedia article licenses before using or redistributing collected data.
-Keep the exact source article URLs and retrieval dates with your local data
-notes so that the scraped tables can be attributed and refreshed responsibly.
-
-Create a `data/` directory and provide the input files expected by the
-notebooks:
-
-- `books_enriched.csv` — enriched source catalogue with the book fields used in
-  `notebooks/data_processing.ipynb`.
-- `books.db` — award tables used by
-  `notebooks/bestseller_awardwinner.ipynb`.
-- `books_by_award.csv`, `award_matches.csv`, and CSV exports in `bestsellers/`
-  — award and bestseller matching inputs used by
-  `notebooks/bestseller_awardwinner.ipynb`.
-
-Run the notebooks from the `notebooks/` directory. They use relative paths into
-`data/` and have had saved cell outputs removed. The processing notebook
-produces `data/processed_books_dataset.csv`; the enrichment notebook produces
-the final catalogue:
-
-```text
-data/processed_books_with_bestsellers.csv
-```
-
-Before running the app, confirm the final CSV includes the columns used by
-`sbert.py`, including `google_id`, `title`, `authors`, `categories`,
-`description`, `author_set`, `title_clean`, `author_clean`, `category_clean`,
-`clean_description`, `is_award_winner`, `award_names`, and `is_bestseller`.
-
-The notebooks preserve the project’s data preparation and matching workflow.
-Award matching uses manually verified relationships in `award_matches.csv`;
-review those matches when replacing or updating source data. The award database
-must contain the `awards` and `book_awards` tables before running the award join
-in the processing notebook.
-
-## Run the app
-
-From the repository root, with the processed dataset in place:
+Ensure the required processed dataset is available, then run:
 
 ```powershell
 python app.py
 ```
 
-Then open <http://127.0.0.1:5000>.
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
-## Free public demo on Render
+**Note:** The datasets and SQLite databases required to reproduce the full workflow are not included in the repository.
 
-The repository includes a free Render Blueprint in `render.yaml`. Render Free
-services sleep after inactivity, use ephemeral storage, and have limited memory.
-The app downloads its dataset and sentence-transformer model at startup, so
-initial startup and wake-ups may take several minutes. Likes can be lost when
-the service restarts or redeploys. Render's free limits can change; review its
-current pricing and resource limits before deploying.
+## Deployment
 
-1. Confirm you have permission to publicly serve the processed catalogue.
-2. In Render, create a Blueprint from this repository and set:
-   - `BOOK_DATA_URL` to the direct HTTPS URL for the processed CSV.
-   - `BOOK_DATA_TOKEN` to a Hugging Face read token (keep it secret).
-   - `BOOK_DATA_SHA256` optionally, to verify the downloaded file.
-3. Deploy the Blueprint and share the public `onrender.com` URL with visitors.
-   Do not share the local `127.0.0.1` address.
+The public demo is hosted on [PythonAnywhere](https://jeannyherlly.pythonanywhere.com/). The hosted version uses a separate deployment bundle with a precomputed similarity matrix.
 
-`BOOK_DATA_URL` should point directly to the CSV bytes, not to a preview or
-login page. The downloader requires HTTPS, validates the expected CSV columns,
-and never includes the configured token in its error message.
+Docker and Render configuration files are also included for alternative deployments. Availability and resource limits depend on each hosting platform's current plan.
 
-Render's free services do not include persistent disks. The service uses
-temporary storage for the catalogue, downloaded model, and likes database.
-Search engines are asked not to index the site, but this is only a
-discoverability hint: anyone with the URL can visit and share it. This is not
-password protection.
+## Data Sources and Attribution
 
-## PythonAnywhere demo hosting
+- [Google Books API documentation](https://developers.google.com/books/docs/v1/using)
+- [Open Library API documentation](https://openlibrary.org/developers/api)
+- [Wikipedia licensing information](https://en.wikipedia.org/wiki/Wikipedia:Copyrights)
 
-The public demo uses a **separate PythonAnywhere deployment bundle** with a
-locally precomputed float16 SBERT similarity matrix. That hosting-specific
-bundle is not part of this GitHub repository; the GitHub/VS Code app continues
-to use the regular Sentence Transformers setup documented above. The hosted
-copy keeps its catalogue and liked-book database in the account's storage.
-Free-account quotas, outbound network access, and monthly renewal requirements
-can change, so check PythonAnywhere's current plan details before deploying
-another copy.
-
-## Hugging Face Spaces alternative
-
-Hugging Face Spaces can also run this Docker app, but free Docker CPU hosting
-may require a paid PRO subscription. Check current account eligibility and
-pricing before creating a Space.
-
-1. Create a **public Space** and choose **Docker** as its SDK.
-2. Add a Space secret named `HF_TOKEN` with a read token that has access to the
-   private dataset.
-3. Add a Space variable named `BOOK_DATA_URL` with the direct CSV URL:
-
-   ```text
-   https://huggingface.co/datasets/Jeanny26/processed_books_with_bestsellers.csv/resolve/main/processed_books_with_bestseller_award.csv?download=true
-   ```
-
-4. Optionally set `BOOK_DATA_SHA256` to verify the file contents.
-5. Push this repository's `main` branch to the Space's Git remote. The Space
-   builds the Docker image and starts the app on port 7860.
-
-For the Space's Git remote, follow the repository-specific URL shown on its
-page; it will look like `https://huggingface.co/spaces/USERNAME/SPACE_NAME`.
-Keep `HF_TOKEN` in Space settings only. Visitors use the public Space URL; they
-do not need access to the private dataset repository. The app serves catalogue
-records through its public API, so only use a dataset you are permitted to
-redistribute through the demo.
-
-The app asks search engines not to index its pages, but this is only a
-discoverability hint. Hugging Face public Spaces can still be listed on
-Hugging Face, and anyone who gets the URL can visit it or share it. This is not
-password protection or a way to restrict access to invited people, and it does
-not change whether you have permission to display the dataset. For actual
-access control, use a private Space; viewers will need authorized Hugging Face
-accounts.
-
-The Space filesystem may not persist across rebuilds or resets. Likes can be
-lost, and a sleeping Space can make the first visit slow.
-
-## Recommendation approach
-
-The recommender precomputes normalized sentence embeddings for titles,
-categories, and descriptions with `all-MiniLM-L6-v2`. Its ranking combines
-cosine similarity with small bonuses for shared authors, award winners, and
-bestsellers. Recommendations for liked books use the strongest similarity to
-any saved book and a small award bonus.
-
-## Notes
-
-- Likes are stored in the local `bookmatch.db`; the database is not committed.
-- Generated datasets, model files, and Python caches are not committed.
-- No personal book data should be added to the public repository.
+Review the applicable terms before redistributing collected data. Keep API keys, `.env`, `.venv/`, generated datasets, and local databases out of version control.
