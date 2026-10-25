@@ -40,8 +40,6 @@ The data pipeline includes exploratory analysis, data cleaning, metadata enrichm
 ## Project Structure
 
 ```text
-
-Project structure
 app.py                         Flask routes and likes API
 sbert.py                       Dataset loading, embeddings, and ranking
 static/                        Frontend JavaScript and CSS
